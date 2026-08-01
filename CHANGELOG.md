@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.10.0-web-alpha — 2026-08-01
+
+### Added
+
+- Clickable progress-category cards for Home Village and Builder Base.
+- Original inline SVG icons for structures, traps, laboratory, heroes, equipment, pets, walls, Builder Base, and Star Laboratory.
+- Responsive category detail sheet that opens as a bottom sheet on phones and a centered dialog on larger screens.
+- Individual current levels for heroes, pets, equipment, troops, spells, siege machines, structures, traps, walls, Builder Base troops, and Builder Base heroes.
+- Active-upgrade status, target level, remaining time, item counts, level distributions, and latest snapshot change inside category details.
+- Laboratory filters for troops, spells, and siege machines.
+- Structure filters for defenses, resources, army buildings, Town Hall or Builder Hall, support structures, and other buildings.
+- Keyboard Escape and backdrop closing plus focus restoration for the detail dialog.
+
+### Changed
+
+- Replaced ambiguous progress lines with clear interactive cards containing an icon, item count, percentage, level-point total, and “View details” affordance.
+- Updated dashboard and landing-page version labels to Web Alpha 0.10.
+
+### Current boundary
+
+- Per-object detail currently shows the level present in the village export. Exact maximum levels are still calculated at category level rather than attached to every individual object.
+
 ## 0.7.0-alpha — 2026-08-01
 
 ### Added

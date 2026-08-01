@@ -1,4 +1,4 @@
-# 50 Champs — Web Preview 0.9
+# 50 Champs — Web Alpha 0.10
 
 50 Champs is an unofficial browser-based clan management and village progress toolkit.
 
@@ -20,6 +20,22 @@
 - War Room and cleanup board
 - CWL Bonus Tracker
 - Local backup and recovery
+
+## Interactive progress details
+
+The Home Village and Builder Base progress categories are clickable cards with original SVG icons.
+
+Opening a category shows the individual levels detected in the village export:
+
+- Heroes — every hero, current level, active upgrade, and latest change
+- Hero pets — every pet and its current level
+- Hero equipment — every equipment item and its current level
+- Laboratory — troops, spells, and siege machines with category filters
+- Structures — defenses, resources, army buildings, Town Hall, and support filters
+- Traps and walls — level distributions and object counts
+- Builder Base — structures, traps, Star Laboratory troops, heroes, and walls
+
+The detail view shows current exported levels. Individual maximum levels are not yet attached to every object; exact maximum comparison remains calculated at the category level.
 
 ## Important alpha limitation
 

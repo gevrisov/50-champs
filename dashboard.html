@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <meta name="description" content="Village progress, upgrade tracking, and clan war coordination.">
-  <title>50 Champs — Dashboard 0.9 Web Preview</title>
+  <title>50 Champs — Dashboard 0.10 Web Alpha</title>
   <style>
 :root {
   color-scheme: dark;
@@ -330,6 +330,174 @@ code { color: #b8c5ff; font-size: 12px; }
 
 @media (max-width: 760px) {
   .exact-progress-grid { grid-template-columns: 1fr; }
+}
+
+/* Clickable progress categories and detail sheet */
+.exact-progress-row.progress-detail-trigger {
+  width: 100%;
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: rgba(8, 12, 24, .34);
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.exact-progress-row.progress-detail-trigger:hover,
+.exact-progress-row.progress-detail-trigger:focus-visible {
+  border-color: rgba(110, 140, 255, .5);
+  background: rgba(110, 140, 255, .09);
+  outline: none;
+}
+.exact-progress-row.progress-detail-trigger:active { transform: scale(.995); }
+.progress-card-heading { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.progress-card-icon,
+.detail-sheet-icon,
+.detail-entity-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #b7c3ff;
+  background: var(--accent-soft);
+  border: 1px solid rgba(110, 140, 255, .2);
+}
+.progress-card-icon { width: 34px; height: 34px; border-radius: 11px; }
+.progress-card-icon svg { width: 19px; height: 19px; }
+.progress-card-text { min-width: 0; }
+.progress-card-text span { display: block; font-weight: 700; color: var(--text); }
+.progress-card-text small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+.progress-card-chevron { color: var(--muted); font-size: 18px; line-height: 1; margin-left: 4px; }
+.progress-row-label.progress-card-label { align-items: center; }
+.progress-card-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.progress-card-footer small:last-child { color: #aebdff; }
+
+.progress-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.progress-detail-modal.hidden { display: none; }
+.progress-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(1, 4, 12, .76);
+  backdrop-filter: blur(7px);
+}
+.progress-detail-sheet {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(820px, calc(100vh - 40px));
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: #0e1527;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .48);
+}
+.progress-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.progress-detail-title-wrap { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.detail-sheet-icon { width: 46px; height: 46px; border-radius: 14px; }
+.detail-sheet-icon svg { width: 26px; height: 26px; }
+.progress-detail-header h2 { margin-bottom: 4px; }
+.progress-detail-header p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.progress-detail-close {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+}
+.progress-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.detail-summary-item {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 10px 11px;
+  background: var(--panel-soft);
+}
+.detail-summary-item span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+.detail-summary-item strong { display: block; margin-top: 5px; font-size: 16px; overflow-wrap: anywhere; }
+.progress-detail-body { min-height: 0; overflow-y: auto; padding: 16px 20px 22px; }
+.progress-detail-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.detail-filter-button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  padding: 7px 11px;
+  font-size: 12px;
+}
+.detail-filter-button.active { background: var(--accent-soft); border-color: rgba(110, 140, 255, .42); color: var(--text); }
+.progress-detail-list { display: grid; gap: 9px; }
+.detail-entity-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--panel-soft);
+}
+.detail-entity-icon { width: 38px; height: 38px; border-radius: 12px; }
+.detail-entity-icon svg { width: 20px; height: 20px; }
+.detail-entity-main { min-width: 0; }
+.detail-entity-name-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.detail-entity-main strong { overflow-wrap: anywhere; }
+.detail-entity-meta { color: var(--muted); font-size: 11px; line-height: 1.45; margin-top: 4px; }
+.detail-entity-level { text-align: right; white-space: nowrap; }
+.detail-entity-level strong { display: block; font-size: 17px; }
+.detail-entity-level small { color: var(--muted); font-size: 10px; }
+.detail-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 9px;
+  line-height: 1.2;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.detail-chip.active { color: var(--success); border-color: rgba(87, 216, 155, .35); background: rgba(87, 216, 155, .08); }
+.detail-chip.extra { color: var(--warning); border-color: rgba(242, 190, 92, .3); }
+.detail-change { color: var(--success); }
+.detail-empty { padding: 30px 12px; text-align: center; color: var(--muted); }
+body.progress-detail-open { overflow: hidden; }
+
+@media (max-width: 620px) {
+  .progress-detail-modal { place-items: end center; padding: 0; }
+  .progress-detail-sheet { width: 100%; max-height: 91vh; border-radius: 22px 22px 0 0; border-bottom: 0; }
+  .progress-detail-header { padding: 16px; }
+  .progress-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px 16px; }
+  .progress-detail-body { padding: 14px 16px 22px; }
+  .detail-entity-card { grid-template-columns: auto minmax(0, 1fr); }
+  .detail-entity-level { grid-column: 2; text-align: left; display: flex; align-items: baseline; gap: 6px; }
 }
 
 /* Upgrade planner */
@@ -671,7 +839,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
         <div class="brand-mark">CC</div>
         <div>
           <strong>Clan Command</strong>
-          <span>Village & War Center · Web Alpha 0.9</span>
+          <span>Village & War Center · Web Alpha 0.10</span>
         </div>
       </div>
 
@@ -690,7 +858,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
       </nav>
 
       <div class="sidebar-note">
-        <strong>50 Champs · 0.9 Web Preview</strong>
+        <strong>50 Champs · 0.10 Web Alpha</strong>
         <span>Browser-based clan tools. Data remains local until server synchronization is added.</span>
       </div>
     </aside>
@@ -1434,6 +1602,27 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
         </section>
     </main>
   </div>
+
+  <div id="progress-detail-modal" class="progress-detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="progress-detail-title" aria-hidden="true">
+    <button class="progress-detail-backdrop" type="button" data-progress-detail-close aria-label="Close category details"></button>
+    <section class="progress-detail-sheet" role="document">
+      <header class="progress-detail-header">
+        <div class="progress-detail-title-wrap">
+          <div id="progress-detail-icon" class="detail-sheet-icon" aria-hidden="true"></div>
+          <div>
+            <h2 id="progress-detail-title">Category details</h2>
+            <p id="progress-detail-subtitle"></p>
+          </div>
+        </div>
+        <button id="progress-detail-close" class="progress-detail-close" type="button" data-progress-detail-close aria-label="Close">×</button>
+      </header>
+      <div id="progress-detail-summary" class="progress-detail-summary"></div>
+      <div class="progress-detail-body">
+        <div id="progress-detail-filters" class="progress-detail-filters"></div>
+        <div id="progress-detail-list" class="progress-detail-list"></div>
+      </div>
+    </section>
+  </div>
   <script>
 const CATEGORY_META = {
   buildings: { label: "Home buildings", village: "home", kind: "building", progress: true },
@@ -2156,6 +2345,88 @@ function entityScore(item) {
 }
 
 
+const PROGRESS_DETAIL_CONFIG = {
+  homeStructures: {
+    title: "Home Village structures",
+    subtitle: "Defenses, resource buildings, army buildings, Town Hall, and support structures.",
+    icon: "structures",
+    categories: ["buildings"],
+    excludeSubgroups: ["wall"],
+    scoredGroups: ["homeDefenses", "homeResources", "homeInfrastructure"],
+    filters: [
+      ["all", "All"], ["defense", "Defenses"], ["resource", "Resources"],
+      ["army", "Army"], ["townhall", "Town Hall"], ["support", "Support"], ["other", "Other"]
+    ]
+  },
+  homeTraps: {
+    title: "Home Village traps", subtitle: "Every trap type and its current level distribution.", icon: "traps",
+    categories: ["traps"], filters: [["all", "All"]]
+  },
+  homeLaboratory: {
+    title: "Laboratory", subtitle: "Troops, spells, and siege machines from the Home Village laboratory.", icon: "laboratory",
+    categories: ["units", "spells", "siege_machines"],
+    filters: [["all", "All"], ["units", "Troops"], ["spells", "Spells"], ["siege_machines", "Siege machines"]]
+  },
+  homeHeroes: {
+    title: "Heroes", subtitle: "Current hero levels, active upgrades, and changes since the previous snapshot.", icon: "heroes",
+    categories: ["heroes"], filters: [["all", "All"]]
+  },
+  homeEquipment: {
+    title: "Hero equipment", subtitle: "Every equipment item detected in the export and its current level.", icon: "equipment",
+    categories: ["equipment"], filters: [["all", "All"]]
+  },
+  homePets: {
+    title: "Hero pets", subtitle: "Pet levels, active upgrades, and recent progress.", icon: "pets",
+    categories: ["pets"], filters: [["all", "All"]]
+  },
+  homeWalls: {
+    title: "Home Village walls", subtitle: "Wall pieces grouped by level.", icon: "walls",
+    categories: ["buildings"], includeSubgroups: ["wall"], filters: [["all", "All"]]
+  },
+  builderStructures: {
+    title: "Builder Base structures", subtitle: "Defenses, resources, army buildings, Builder Hall, and support structures.", icon: "builder",
+    categories: ["buildings2"], excludeSubgroups: ["wall"],
+    scoredGroups: ["builderDefenses", "builderResources", "builderInfrastructure"],
+    filters: [
+      ["all", "All"], ["defense", "Defenses"], ["resource", "Resources"],
+      ["army", "Army"], ["townhall", "Builder Hall"], ["support", "Support"], ["other", "Other"]
+    ]
+  },
+  builderTraps: {
+    title: "Builder Base traps", subtitle: "Every Builder Base trap and its level distribution.", icon: "traps",
+    categories: ["traps2"], filters: [["all", "All"]]
+  },
+  builderLaboratory: {
+    title: "Star Laboratory", subtitle: "Builder Base troop levels and active research.", icon: "starLaboratory",
+    categories: ["units2"], filters: [["all", "All"]]
+  },
+  builderHeroes: {
+    title: "Builder Base heroes", subtitle: "Battle Machine and Battle Copter levels.", icon: "heroes",
+    categories: ["heroes2"], filters: [["all", "All"]]
+  },
+  builderWalls: {
+    title: "Builder Base walls", subtitle: "Builder Wall pieces grouped by level.", icon: "walls",
+    categories: ["buildings2"], includeSubgroups: ["wall"], filters: [["all", "All"]]
+  }
+};
+
+const PROGRESS_ICON_PATHS = {
+  structures: '<path d="M4 20h16M6 20V9l6-5 6 5v11M9 20v-6h6v6M8 9h8"/>',
+  traps: '<path d="M12 3v3M4.2 6.2l2.1 2.1M19.8 6.2l-2.1 2.1M3 14h18M5 14l2 7h10l2-7M9 10h6l2 4H7l2-4Z"/>',
+  laboratory: '<path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3M7.5 15h9"/>',
+  heroes: '<path d="m4 7 4 4 4-7 4 7 4-4-2 11H6L4 7ZM7 18h10"/>',
+  equipment: '<path d="m14 4 6 6-8.5 8.5a3 3 0 0 1-4.2 0l-1.8-1.8a3 3 0 0 1 0-4.2L14 4ZM12 6l6 6M5 19l-2 2"/>',
+  pets: '<path d="M8.5 11c1.2 0 2.2-1.3 2.2-2.8S9.7 5.4 8.5 5.4 6.3 6.7 6.3 8.2 7.3 11 8.5 11Zm7 0c1.2 0 2.2-1.3 2.2-2.8s-1-2.8-2.2-2.8-2.2 1.3-2.2 2.8 1 2.8 2.2 2.8ZM5 15c1 0 1.8-1 1.8-2.2S6 10.6 5 10.6s-1.8 1-1.8 2.2S4 15 5 15Zm14 0c1 0 1.8-1 1.8-2.2S20 10.6 19 10.6s-1.8 1-1.8 2.2S18 15 19 15Zm-7 6c3.3 0 5.5-1.6 5.5-3.8 0-2-2.5-4.5-5.5-4.5s-5.5 2.5-5.5 4.5C6.5 19.4 8.7 21 12 21Z"/>',
+  walls: '<path d="M3 5h8v5H3V5Zm10 0h8v5h-8V5ZM7 12h10v5H7v-5ZM3 19h8v2H3v-2Zm10 0h8v2h-8v-2Z"/>',
+  builder: '<path d="m14.5 5.5 4 4M13 7l4-4 4 4-4 4M4 20l8.5-8.5M6 14l4 4M3 21l3-1-2-2-1 3Z"/>',
+  starLaboratory: '<path d="M9 3h6M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3M12 11l.8 1.7 1.9.2-1.4 1.3.4 1.9-1.7-.9-1.7.9.4-1.9-1.4-1.3 1.9-.2L12 11Z"/>'
+};
+
+function progressIconSvg(iconKey) {
+  const path = PROGRESS_ICON_PATHS[iconKey] || PROGRESS_ICON_PATHS.structures;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+}
+
 const DATA_VERSION = "0.16.0";
 const DATA_URL = `https://cdn.jsdelivr.net/npm/clash-of-clans-data@${DATA_VERSION}/+esm`;
 const CACHE_PREFIX = `ccc:max-level-counts:${DATA_VERSION}`;
@@ -2187,21 +2458,21 @@ function calculateExactProgress(snapshot, maxCounts) {
   const builder = maxCounts.builderCounts;
 
   const homeRows = home ? [
-    progressRow("Structures", group("homeDefenses") + group("homeResources") + group("homeInfrastructure"), home.structures),
-    progressRow("Traps", group("homeTraps"), home.traps),
-    progressRow("Laboratory", group("homeTroops") + group("homeSpells") + group("homeSiege"), home.lab),
-    progressRow("Heroes", group("homeHeroes"), home.heroes),
-    progressRow("Hero equipment", group("homeEquipment"), home.equipment),
-    progressRow("Pets", group("homePets"), home.pets),
-    progressRow("Walls", group("homeWalls"), home.walls)
+    progressRow("Structures", group("homeDefenses") + group("homeResources") + group("homeInfrastructure"), home.structures, "homeStructures"),
+    progressRow("Traps", group("homeTraps"), home.traps, "homeTraps"),
+    progressRow("Laboratory", group("homeTroops") + group("homeSpells") + group("homeSiege"), home.lab, "homeLaboratory"),
+    progressRow("Heroes", group("homeHeroes"), home.heroes, "homeHeroes"),
+    progressRow("Hero equipment", group("homeEquipment"), home.equipment, "homeEquipment"),
+    progressRow("Pets", group("homePets"), home.pets, "homePets"),
+    progressRow("Walls", group("homeWalls"), home.walls, "homeWalls")
   ].filter((row) => row.maximum > 0) : [];
 
   const builderRows = builder ? [
-    progressRow("Structures", group("builderDefenses") + group("builderResources") + group("builderInfrastructure"), builder.structures),
-    progressRow("Traps", group("builderTraps"), builder.traps),
-    progressRow("Star Laboratory", group("builderTroops"), builder.starLab),
-    progressRow("Heroes", group("builderHeroes"), builder.heroes),
-    progressRow("Walls", group("builderWalls"), builder.walls)
+    progressRow("Structures", group("builderDefenses") + group("builderResources") + group("builderInfrastructure"), builder.structures, "builderStructures"),
+    progressRow("Traps", group("builderTraps"), builder.traps, "builderTraps"),
+    progressRow("Star Laboratory", group("builderTroops"), builder.starLab, "builderLaboratory"),
+    progressRow("Heroes", group("builderHeroes"), builder.heroes, "builderHeroes"),
+    progressRow("Walls", group("builderWalls"), builder.walls, "builderWalls")
   ].filter((row) => row.maximum > 0) : [];
 
   return {
@@ -2213,12 +2484,13 @@ function calculateExactProgress(snapshot, maxCounts) {
   };
 }
 
-function progressRow(label, current, maximum) {
+function progressRow(label, current, maximum, detailKey = "") {
   const safeCurrent = Number(current) || 0;
   const safeMaximum = Number(maximum) || 0;
   const percent = safeMaximum > 0 ? (safeCurrent / safeMaximum) * 100 : 0;
   return {
     label,
+    detailKey,
     current: safeCurrent,
     maximum: safeMaximum,
     percent,
@@ -3056,7 +3328,7 @@ function createId() {
 }
 
 
-const APP_VERSION = "0.9.0-web-preview";
+const APP_VERSION = "0.10.0-web-alpha";
 const BACKUP_FORMAT_VERSION = 4;
 
 const STORAGE = {
@@ -3088,7 +3360,10 @@ const state = {
   progressError: null,
   plannerTasks: [],
   plannerSettings: { ...DEFAULT_PLANNER_SETTINGS },
-  plannerSchedule: null
+  plannerSchedule: null,
+  progressDetailKey: "",
+  progressDetailFilter: "all",
+  progressDetailReturnFocus: null
 };
 
 const viewTitles = {
@@ -3241,7 +3516,15 @@ const els = {
   cwlExportSeason: document.querySelector("#cwl-export-season"),
   cwlMessageOutput: document.querySelector("#cwl-message-output"),
   cwlGenerateMessage: document.querySelector("#cwl-generate-message"),
-  cwlMessageCount: document.querySelector("#cwl-message-count")
+  cwlMessageCount: document.querySelector("#cwl-message-count"),
+  progressDetailModal: document.querySelector("#progress-detail-modal"),
+  progressDetailIcon: document.querySelector("#progress-detail-icon"),
+  progressDetailTitle: document.querySelector("#progress-detail-title"),
+  progressDetailSubtitle: document.querySelector("#progress-detail-subtitle"),
+  progressDetailSummary: document.querySelector("#progress-detail-summary"),
+  progressDetailFilters: document.querySelector("#progress-detail-filters"),
+  progressDetailList: document.querySelector("#progress-detail-list"),
+  progressDetailClose: document.querySelector("#progress-detail-close")
 };
 
 initialize();
@@ -3291,12 +3574,26 @@ function bindEvents() {
     const plannerMoveButton = event.target.closest("[data-planner-move]");
     if (plannerMoveButton) movePlannerTask(plannerMoveButton.dataset.plannerMove, Number(plannerMoveButton.dataset.direction));
 
+    const progressDetailButton = event.target.closest("[data-progress-detail]");
+    if (progressDetailButton) openProgressDetail(progressDetailButton.dataset.progressDetail, progressDetailButton);
+
+    const progressDetailFilter = event.target.closest("[data-progress-detail-filter]");
+    if (progressDetailFilter) {
+      state.progressDetailFilter = progressDetailFilter.dataset.progressDetailFilter || "all";
+      renderProgressDetail();
+    }
+
+    if (event.target.closest("[data-progress-detail-close]")) closeProgressDetail();
 
     const cwlAddMemberButton = event.target.closest("[data-cwl-add-member]");
     if (cwlAddMemberButton) addCwlPlayerFromMember(cwlAddMemberButton.dataset.cwlAddMember);
 
     const cwlRemovePlayerButton = event.target.closest("[data-cwl-remove-player]");
     if (cwlRemovePlayerButton) removeCwlPlayer(cwlRemovePlayerButton.dataset.cwlRemovePlayer);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.progressDetailKey) closeProgressDetail();
   });
 
   els.accountSelect.addEventListener("change", () => {
@@ -3497,6 +3794,7 @@ function renderAll() {
   renderClan();
   renderWarRoom();
   renderCwl();
+  if (state.progressDetailKey) renderProgressDetail();
 }
 
 function renderAccountStatus() {
@@ -3613,11 +3911,182 @@ function progressSection(title, section, subtitle) {
 
 function progressRowHtml(row) {
   const width = clampPercent(row.percent);
-  return `<div class="exact-progress-row">
-    <div class="progress-row-label"><span>${escapeHtml(row.label)}</span><strong class="${row.mismatch ? "delta-negative" : ""}">${formatPercent(row.percent)}</strong></div>
+  const config = PROGRESS_DETAIL_CONFIG[row.detailKey] || {};
+  const itemCount = countProgressDetailItems(row.detailKey);
+  const itemLabel = itemCount === 1 ? "1 item" : `${itemCount} items`;
+  return `<button type="button" class="exact-progress-row progress-detail-trigger" data-progress-detail="${escapeHtml(row.detailKey)}" aria-label="Open ${escapeHtml(row.label)} level details">
+    <div class="progress-row-label progress-card-label">
+      <span class="progress-card-heading">
+        <span class="progress-card-icon">${progressIconSvg(config.icon)}</span>
+        <span class="progress-card-text"><span>${escapeHtml(row.label)}</span><small>${escapeHtml(itemLabel)} · tap to view levels</small></span>
+      </span>
+      <span style="display:flex;align-items:center;gap:8px"><strong class="${row.mismatch ? "delta-negative" : ""}">${formatPercent(row.percent)}</strong><span class="progress-card-chevron">›</span></span>
+    </div>
     <div class="progress-row-track"><div style="width:${width}%"></div></div>
-    <small>${row.current.toLocaleString()} / ${row.maximum.toLocaleString()}</small>
-  </div>`;
+    <span class="progress-card-footer"><small>${row.current.toLocaleString()} / ${row.maximum.toLocaleString()} level-points</small><small>View details</small></span>
+  </button>`;
+}
+
+function countProgressDetailItems(detailKey) {
+  const config = PROGRESS_DETAIL_CONFIG[detailKey];
+  if (!state.current || !config) return 0;
+  return getProgressDetailEntities(config).length;
+}
+
+function getProgressDetailEntities(config) {
+  if (!state.current || !config) return [];
+  const source = config.categories.flatMap((category) => state.current.categories?.[category] || []);
+  const filtered = source.filter((item) => {
+    if (config.includeSubgroups?.length && !config.includeSubgroups.includes(item.subgroup)) return false;
+    if (config.excludeSubgroups?.length && config.excludeSubgroups.includes(item.subgroup)) return false;
+    return true;
+  });
+  const aggregated = aggregateEntitiesFromList(filtered);
+  const categoryOrder = new Map(config.categories.map((category, index) => [category, index]));
+  return aggregated.sort((a, b) => {
+    const categoryDelta = (categoryOrder.get(a.category) ?? 99) - (categoryOrder.get(b.category) ?? 99);
+    if (categoryDelta) return categoryDelta;
+    const order = entityDisplayOrder(a.category, a.dataId) - entityDisplayOrder(b.category, b.dataId);
+    if (order) return order;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function entityDisplayOrder(category, dataId) {
+  const ids = Object.keys(NAMES[category] || {}).map(Number);
+  const index = ids.indexOf(Number(dataId));
+  return index === -1 ? 9999 : index;
+}
+
+function openProgressDetail(detailKey, trigger = null) {
+  if (!state.current || !PROGRESS_DETAIL_CONFIG[detailKey]) return;
+  state.progressDetailKey = detailKey;
+  state.progressDetailFilter = "all";
+  state.progressDetailReturnFocus = trigger || document.activeElement;
+  renderProgressDetail();
+  els.progressDetailModal.classList.remove("hidden");
+  els.progressDetailModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("progress-detail-open");
+  requestAnimationFrame(() => els.progressDetailClose?.focus());
+}
+
+function closeProgressDetail() {
+  if (!state.progressDetailKey) return;
+  state.progressDetailKey = "";
+  state.progressDetailFilter = "all";
+  els.progressDetailModal.classList.add("hidden");
+  els.progressDetailModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("progress-detail-open");
+  const returnFocus = state.progressDetailReturnFocus;
+  state.progressDetailReturnFocus = null;
+  if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+}
+
+function renderProgressDetail() {
+  const detailKey = state.progressDetailKey;
+  const config = PROGRESS_DETAIL_CONFIG[detailKey];
+  if (!state.current || !config) return;
+
+  const allEntities = getProgressDetailEntities(config);
+  const visibleEntities = allEntities.filter((entity) => progressDetailMatchesFilter(entity, state.progressDetailFilter));
+  const exactRow = findExactProgressRow(detailKey);
+  const activeCount = allEntities.filter((entity) => entity.activeUpgrade).length;
+  const totalPieces = allEntities.reduce((sum, entity) => sum + entity.totalCount, 0);
+  const trackedCount = config.scoredGroups?.length
+    ? allEntities.filter((entity) => config.scoredGroups.includes(entity.progressGroup)).length
+    : allEntities.length;
+
+  els.progressDetailIcon.innerHTML = progressIconSvg(config.icon);
+  els.progressDetailTitle.textContent = config.title;
+  els.progressDetailSubtitle.textContent = config.subtitle;
+  els.progressDetailSummary.innerHTML = [
+    detailSummaryItem("Detected", `${allEntities.length} types`),
+    detailSummaryItem("Objects", totalPieces.toLocaleString()),
+    detailSummaryItem("Upgrading", activeCount.toLocaleString()),
+    detailSummaryItem("Category", exactRow ? formatPercent(exactRow.percent) : "Snapshot")
+  ].join("");
+
+  const filters = (config.filters || [["all", "All"]]).filter(([key]) => {
+    if (key === "all") return true;
+    return allEntities.some((entity) => progressDetailMatchesFilter(entity, key));
+  });
+  if (!filters.some(([key]) => key === state.progressDetailFilter)) state.progressDetailFilter = "all";
+  els.progressDetailFilters.innerHTML = filters.length > 1
+    ? filters.map(([key, label]) => `<button type="button" class="detail-filter-button ${state.progressDetailFilter === key ? "active" : ""}" data-progress-detail-filter="${escapeHtml(key)}">${escapeHtml(label)}</button>`).join("")
+    : "";
+
+  const note = config.scoredGroups?.length && trackedCount < allEntities.length
+    ? `<div class="cwl-note" style="margin-bottom:12px"><strong>${trackedCount} types</strong> are included in the current structures score. Town Hall and some support buildings are displayed for reference but are not included in that aggregate.</div>`
+    : "";
+  els.progressDetailList.innerHTML = note + (visibleEntities.length
+    ? visibleEntities.map((entity) => progressDetailEntityHtml(entity, config)).join("")
+    : `<div class="detail-empty">No objects were found for this filter.</div>`);
+}
+
+function findExactProgressRow(detailKey) {
+  const sections = [state.exactProgress?.home, state.exactProgress?.builder];
+  return sections.flatMap((section) => section?.rows || []).find((row) => row.detailKey === detailKey) || null;
+}
+
+function progressDetailMatchesFilter(entity, filter) {
+  if (!filter || filter === "all") return true;
+  if (["units", "spells", "siege_machines", "units2"].includes(filter)) return entity.category === filter;
+  return entity.subgroup === filter;
+}
+
+function detailSummaryItem(label, value) {
+  return `<div class="detail-summary-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function progressDetailEntityHtml(entity, config) {
+  const levels = formatLevelDistribution(entity.levels);
+  const highestLevel = Math.max(0, ...Object.keys(entity.levels || {}).map(Number));
+  const active = entity.activeUpgrade;
+  const change = state.comparison?.changedEntities?.find((item) => item.identity === entity.identityKey);
+  const changeText = change?.delta
+    ? `<span class="detail-change">${change.delta > 0 ? "+" : ""}${change.delta} level-points since last import</span>`
+    : "No level change in latest comparison";
+  const categoryText = progressDetailCategoryText(entity);
+  const scoringExcluded = config.scoredGroups?.length && !config.scoredGroups.includes(entity.progressGroup);
+  const activeText = active
+    ? `Upgrading${entity.totalCount === 1 ? ` to Lv ${active.targetLevel}` : " one item"} · ${formatDuration(active.finishAt - Date.now())}`
+    : "";
+  const icon = progressIconSvg(progressDetailEntityIcon(entity));
+
+  return `<article class="detail-entity-card">
+    <div class="detail-entity-icon" aria-hidden="true">${icon}</div>
+    <div class="detail-entity-main">
+      <div class="detail-entity-name-row">
+        <strong>${escapeHtml(entity.name)}</strong>
+        ${active ? '<span class="detail-chip active">UPGRADING</span>' : ""}
+        ${!entity.known ? '<span class="detail-chip extra">UNKNOWN ID</span>' : ""}
+        ${scoringExcluded ? '<span class="detail-chip extra">REFERENCE ONLY</span>' : ""}
+      </div>
+      <div class="detail-entity-meta">${escapeHtml(categoryText)} · ${escapeHtml(levels)}${entity.totalCount > 1 ? ` · ${entity.totalCount} objects` : ""}</div>
+      <div class="detail-entity-meta">${activeText ? `${escapeHtml(activeText)} · ` : ""}${changeText}</div>
+    </div>
+    <div class="detail-entity-level"><strong>Lv ${highestLevel}</strong><small>${entity.totalCount > 1 ? "highest level" : "current level"}</small></div>
+  </article>`;
+}
+
+function progressDetailCategoryText(entity) {
+  if (entity.category === "units") return "Troop";
+  if (entity.category === "spells") return "Spell";
+  if (entity.category === "siege_machines") return "Siege machine";
+  if (entity.category === "units2") return "Builder troop";
+  if (entity.subgroup && entity.subgroup !== "other") return entity.subgroup.charAt(0).toUpperCase() + entity.subgroup.slice(1);
+  return entity.categoryLabel || categoryLabel(entity.category);
+}
+
+function progressDetailEntityIcon(entity) {
+  if (["heroes", "heroes2"].includes(entity.category)) return "heroes";
+  if (entity.category === "pets") return "pets";
+  if (entity.category === "equipment") return "equipment";
+  if (["units", "spells", "siege_machines"].includes(entity.category)) return "laboratory";
+  if (entity.category === "units2") return "starLaboratory";
+  if (["traps", "traps2"].includes(entity.category)) return "traps";
+  if (entity.subgroup === "wall") return "walls";
+  return entity.village === "builder" ? "builder" : "structures";
 }
 
 function formatPercent(value) {

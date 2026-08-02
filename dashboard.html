@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <meta name="description" content="Village progress, upgrade tracking, and clan war coordination.">
-  <title>50 Champs — Dashboard 0.10 Web Alpha</title>
+  <title>50 Champs — Dashboard 0.11 Web Alpha</title>
   <style>
 :root {
   color-scheme: dark;
@@ -485,8 +485,18 @@ code { color: #b8c5ff; font-size: 12px; }
   color: var(--muted);
 }
 .detail-chip.active { color: var(--success); border-color: rgba(87, 216, 155, .35); background: rgba(87, 216, 155, .08); }
+.detail-chip.maxed { color: var(--success); border-color: rgba(87, 216, 155, .35); background: rgba(87, 216, 155, .08); }
+.detail-chip.danger { color: var(--danger); border-color: rgba(255, 123, 135, .38); background: rgba(255, 123, 135, .08); }
 .detail-chip.extra { color: var(--warning); border-color: rgba(242, 190, 92, .3); }
 .detail-change { color: var(--success); }
+.detail-level-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 9px; color: var(--muted); font-size: 11px; }
+.detail-level-line strong { color: var(--text); font-size: 12px; }
+.detail-level-track { height: 6px; border-radius: 999px; background: #090e1b; overflow: hidden; margin-top: 6px; }
+.detail-level-track > div { height: 100%; border-radius: inherit; background: var(--accent); }
+.detail-unknown-progress { display: grid; gap: 3px; margin-top: 9px; padding: 9px 10px; border: 1px dashed rgba(242, 190, 92, .34); border-radius: 10px; background: rgba(242, 190, 92, .045); }
+.detail-unknown-progress strong { font-size: 11px; color: var(--text); }
+.detail-unknown-progress span { color: var(--warning); font-size: 10px; }
+.detail-entity-card.catalog-unmatched { border-color: rgba(242, 190, 92, .25); }
 .detail-empty { padding: 30px 12px; text-align: center; color: var(--muted); }
 body.progress-detail-open { overflow: hidden; }
 
@@ -839,7 +849,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
         <div class="brand-mark">CC</div>
         <div>
           <strong>Clan Command</strong>
-          <span>Village & War Center · Web Alpha 0.10</span>
+          <span>Village & War Center · Web Alpha 0.11</span>
         </div>
       </div>
 
@@ -858,7 +868,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
       </nav>
 
       <div class="sidebar-note">
-        <strong>50 Champs · 0.10 Web Alpha</strong>
+        <strong>50 Champs · 0.11 Web Alpha</strong>
         <span>Browser-based clan tools. Data remains local until server synchronization is added.</span>
       </div>
     </aside>
@@ -907,7 +917,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
             <div class="panel-header">
               <div>
                 <p class="eyebrow">MAX-LEVEL CATALOG</p>
-                <h2>Upgrade progress</h2>
+                <h2>Level progress</h2>
               </div>
               <button id="refresh-progress-button" class="text-button">Refresh catalog</button>
             </div>
@@ -923,7 +933,7 @@ button:disabled, input:disabled, select:disabled { opacity: .55; cursor: not-all
                 </div>
                 <span class="info-badge">Snapshot based</span>
               </div>
-              <p class="panel-help">Category totals come from the imported snapshot. Exact completion percentages are calculated separately with the pinned max-level catalog when available.</p>
+              <p class="panel-help">Snapshot scores remain available for history. The max-level catalog above compares every matched object with the maximum available for the detected TH or BH.</p>
               <div id="category-table"></div>
             </section>
 
@@ -2429,72 +2439,279 @@ function progressIconSvg(iconKey) {
 
 const DATA_VERSION = "0.16.0";
 const DATA_URL = `https://cdn.jsdelivr.net/npm/clash-of-clans-data@${DATA_VERSION}/+esm`;
-const CACHE_PREFIX = `ccc:max-level-counts:${DATA_VERSION}`;
+const CATALOG_SCHEMA_VERSION = 2;
+const CACHE_PREFIX = `ccc:entity-level-catalog:${DATA_VERSION}:schema${CATALOG_SCHEMA_VERSION}`;
 
 async function loadMaxLevelCounts(townHall, builderHall, { force = false } = {}) {
   const key = `${CACHE_PREFIX}:th${townHall || 0}:bh${builderHall || 0}`;
   if (!force) {
     const cached = readCache(key);
-    if (cached) return { ...cached, cached: true };
+    if (cached?.entityCatalog) return { ...cached, cached: true };
   }
 
   const module = await import(DATA_URL);
   const homeCounts = townHall ? module.home().levelCountAtTownHall(townHall) : null;
   const builderCounts = builderHall ? module.builder().levelCountAtBuilderHall(builderHall) : null;
+  const entityCatalog = buildEntityLevelCatalog(module, townHall, builderHall);
   const result = {
+    schemaVersion: CATALOG_SCHEMA_VERSION,
     dataVersion: DATA_VERSION,
     loadedAt: new Date().toISOString(),
     homeCounts,
-    builderCounts
+    builderCounts,
+    entityCatalog
   };
   localStorage.setItem(key, JSON.stringify(result));
   return { ...result, cached: false };
 }
 
+function buildEntityLevelCatalog(module, townHall, builderHall) {
+  const homeData = module.home();
+  const builderData = module.builder();
+
+  const homeBuildings = uniqueCatalogEntities([
+    ...queryItems(homeData.armyBuildings()),
+    ...queryItems(homeData.defenses()),
+    ...queryItems(homeData.resourceBuildings()),
+    ...queryItems(homeData.otherBuildings()),
+    ...queryItems(homeData.townHall()),
+    ...queryItems(homeData.walls())
+  ]);
+  const builderBuildings = uniqueCatalogEntities([
+    ...queryItems(builderData.armyBuildings()),
+    ...queryItems(builderData.defenses()),
+    ...queryItems(builderData.resourceBuildings()),
+    ...queryItems(builderData.otherBuildings()),
+    ...queryItems(builderData.builderHall()),
+    ...queryItems(builderData.walls())
+  ]);
+
+  const context = {
+    townHall: Number(townHall) || 0,
+    builderHall: Number(builderHall) || 0,
+    heroHall: maxContextBuildingLevel(homeBuildings, "Hero Hall", "townHallRequired", townHall),
+    blacksmith: maxContextBuildingLevel(homeBuildings, "Blacksmith", "townHallRequired", townHall),
+    petHouse: maxContextBuildingLevel(homeBuildings, "Pet House", "townHallRequired", townHall),
+    starLaboratory: maxContextBuildingLevel(builderBuildings, "Star Laboratory", "builderHallRequired", builderHall)
+  };
+
+  const sources = {
+    buildings: homeBuildings,
+    traps: queryItems(homeData.traps()),
+    units: queryItems(homeData.troops()),
+    siege_machines: queryItems(homeData.siegeMachines()),
+    heroes: queryItems(homeData.heroes()),
+    spells: queryItems(homeData.spells()),
+    pets: queryItems(homeData.pets()),
+    equipment: queryItems(homeData.heroEquipment()),
+    buildings2: builderBuildings,
+    traps2: queryItems(builderData.traps()),
+    units2: queryItems(builderData.troops()),
+    heroes2: queryItems(builderData.heroes())
+  };
+
+  const categories = {};
+  for (const [category, entities] of Object.entries(sources)) {
+    categories[category] = uniqueCatalogEntities(entities).map((entity) => {
+      const maxLevel = effectiveMaxLevel(entity, category, context);
+      return {
+        id: String(entity.id || ""),
+        name: String(entity.name || entity.id || "Unknown"),
+        keys: [...new Set([
+          normalizeCatalogName(entity.name),
+          normalizeCatalogName(entity.id)
+        ].filter(Boolean))],
+        maxLevel,
+        image: entity.images?.icon || entity.images?.normal || null
+      };
+    }).filter((entry) => entry.maxLevel > 0);
+  }
+
+  return {
+    schemaVersion: CATALOG_SCHEMA_VERSION,
+    context,
+    categories
+  };
+}
+
+function queryItems(query) {
+  try {
+    const items = query?.get?.();
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
+function uniqueCatalogEntities(entities) {
+  const seen = new Set();
+  return (Array.isArray(entities) ? entities : []).filter((entity) => {
+    if (!entity || typeof entity !== "object") return false;
+    const key = `${entity.base || ""}:${entity.category || ""}:${entity.id || normalizeCatalogName(entity.name)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function normalizeCatalogName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function maxContextBuildingLevel(entities, name, requirementKey, contextLevel) {
+  const key = normalizeCatalogName(name);
+  const entity = (entities || []).find((item) => normalizeCatalogName(item.name) === key || normalizeCatalogName(item.id) === key);
+  if (!entity) return 0;
+  return maxAllowedLevel(entity.levels, (level) => {
+    const requirement = Number(level?.[requirementKey]);
+    return !Number.isFinite(requirement) || requirement <= Number(contextLevel || 0);
+  });
+}
+
+function effectiveMaxLevel(entity, category, context) {
+  const levels = Array.isArray(entity?.levels) ? entity.levels.filter((level) => !level?.supercharge) : [];
+  if (!levels.length) return 0;
+
+  if (category === "heroes") {
+    return maxAllowedLevel(levels, (level) => Number(level.heroHallLevelRequired || 0) <= context.heroHall);
+  }
+  if (category === "equipment") {
+    return maxAllowedLevel(levels, (level) => Number(level.blacksmithLevelRequired || 0) <= context.blacksmith);
+  }
+  if (category === "pets") {
+    return maxAllowedLevel(levels, (level) => {
+      const thOk = Number(level.townHallRequired || 0) <= context.townHall;
+      const houseOk = Number(level.petHouseLevelRequired || 0) <= context.petHouse;
+      return thOk && houseOk;
+    });
+  }
+  if (["units", "spells", "siege_machines"].includes(category)) {
+    return maxAllowedLevel(levels, (level) => Number(level.townHallRequired || 0) <= context.townHall);
+  }
+  if (["buildings", "traps"].includes(category)) {
+    if (entity.category === "town-hall") {
+      return maxAllowedLevel(levels, (level) => Number(level.level || 0) <= context.townHall);
+    }
+    const hasRequirement = levels.some((level) => Number.isFinite(Number(level.townHallRequired)));
+    return maxAllowedLevel(levels, (level) => !hasRequirement || Number(level.townHallRequired || 0) <= context.townHall);
+  }
+  if (category === "units2") {
+    return maxAllowedLevel(levels, (level) => Number(level.starLabRequired || 0) <= context.starLaboratory);
+  }
+  if (category === "heroes2") {
+    return maxAllowedLevel(levels, (level) => Number(level.builderHallLevelRequired || 0) <= context.builderHall);
+  }
+  if (["buildings2", "traps2"].includes(category)) {
+    if (entity.category === "builder-hall") {
+      return maxAllowedLevel(levels, (level) => Number(level.level || 0) <= context.builderHall);
+    }
+    const hasRequirement = levels.some((level) => Number.isFinite(Number(level.builderHallRequired)));
+    return maxAllowedLevel(levels, (level) => !hasRequirement || Number(level.builderHallRequired || 0) <= context.builderHall);
+  }
+  return maxAllowedLevel(levels, () => true);
+}
+
+function maxAllowedLevel(levels, predicate) {
+  return (Array.isArray(levels) ? levels : [])
+    .filter((level) => predicate(level))
+    .reduce((maximum, level) => Math.max(maximum, Number(level.level) || 0), 0);
+}
+
+function resolveCatalogEntry(entity, catalog = state.levelCatalog) {
+  const entries = catalog?.categories?.[entity?.category];
+  if (!Array.isArray(entries) || !entity) return null;
+  const candidates = new Set([
+    normalizeCatalogName(entity.name),
+    normalizeCatalogName(NAMES[entity.category]?.[entity.dataId])
+  ].filter(Boolean));
+
+  let match = entries.find((entry) => entry.keys?.some((key) => candidates.has(key)));
+  if (match) return match;
+
+  const fuzzy = entries.filter((entry) => entry.keys?.some((key) => [...candidates].some((candidate) =>
+    candidate.length >= 6 && key.length >= 6 && (candidate.includes(key) || key.includes(candidate))
+  )));
+  return fuzzy.length === 1 ? fuzzy[0] : null;
+}
+
+function decorateProgressEntity(entity, catalog = state.levelCatalog) {
+  const catalogEntry = resolveCatalogEntry(entity, catalog);
+  const maxLevel = Number(catalogEntry?.maxLevel) || 0;
+  const maximum = maxLevel > 0 ? maxLevel * entity.totalCount : 0;
+  const current = Number(entity.levelScore) || 0;
+  const remaining = maximum > 0 ? Math.max(0, maximum - current) : null;
+  const percent = maximum > 0 ? (current / maximum) * 100 : null;
+  const maxedObjects = maxLevel > 0 ? Number(entity.levels?.[maxLevel] || 0) : 0;
+  return {
+    ...entity,
+    catalogEntry,
+    maxLevel,
+    maximum,
+    current,
+    remaining,
+    percent,
+    maxedObjects,
+    isMaxed: maximum > 0 && current >= maximum,
+    mismatch: maximum > 0 && current > maximum
+  };
+}
+
 function calculateExactProgress(snapshot, maxCounts) {
-  if (!snapshot || !maxCounts) return null;
-  const group = (name) => snapshot.progressGroups?.[name]?.levelScore || 0;
-  const home = maxCounts.homeCounts;
-  const builder = maxCounts.builderCounts;
+  if (!snapshot || !maxCounts?.entityCatalog) return null;
+  const catalog = maxCounts.entityCatalog;
+  const makeRow = (label, detailKey) => progressRowFromDetail(snapshot, catalog, label, detailKey);
 
-  const homeRows = home ? [
-    progressRow("Structures", group("homeDefenses") + group("homeResources") + group("homeInfrastructure"), home.structures, "homeStructures"),
-    progressRow("Traps", group("homeTraps"), home.traps, "homeTraps"),
-    progressRow("Laboratory", group("homeTroops") + group("homeSpells") + group("homeSiege"), home.lab, "homeLaboratory"),
-    progressRow("Heroes", group("homeHeroes"), home.heroes, "homeHeroes"),
-    progressRow("Hero equipment", group("homeEquipment"), home.equipment, "homeEquipment"),
-    progressRow("Pets", group("homePets"), home.pets, "homePets"),
-    progressRow("Walls", group("homeWalls"), home.walls, "homeWalls")
-  ].filter((row) => row.maximum > 0) : [];
+  const homeRows = [
+    makeRow("Structures", "homeStructures"),
+    makeRow("Traps", "homeTraps"),
+    makeRow("Laboratory", "homeLaboratory"),
+    makeRow("Heroes", "homeHeroes"),
+    makeRow("Hero equipment", "homeEquipment"),
+    makeRow("Pets", "homePets"),
+    makeRow("Walls", "homeWalls")
+  ].filter((row) => row.totalTypes > 0);
 
-  const builderRows = builder ? [
-    progressRow("Structures", group("builderDefenses") + group("builderResources") + group("builderInfrastructure"), builder.structures, "builderStructures"),
-    progressRow("Traps", group("builderTraps"), builder.traps, "builderTraps"),
-    progressRow("Star Laboratory", group("builderTroops"), builder.starLab, "builderLaboratory"),
-    progressRow("Heroes", group("builderHeroes"), builder.heroes, "builderHeroes"),
-    progressRow("Walls", group("builderWalls"), builder.walls, "builderWalls")
-  ].filter((row) => row.maximum > 0) : [];
+  const builderRows = [
+    makeRow("Structures", "builderStructures"),
+    makeRow("Traps", "builderTraps"),
+    makeRow("Star Laboratory", "builderLaboratory"),
+    makeRow("Heroes", "builderHeroes"),
+    makeRow("Walls", "builderWalls")
+  ].filter((row) => row.totalTypes > 0);
 
   return {
     dataVersion: maxCounts.dataVersion,
     loadedAt: maxCounts.loadedAt,
     cached: maxCounts.cached,
     home: summarizeRows(homeRows),
-    builder: summarizeRows(builderRows)
+    builder: summarizeRows(builderRows),
+    referenceTotals: { home: maxCounts.homeCounts, builder: maxCounts.builderCounts }
   };
 }
 
-function progressRow(label, current, maximum, detailKey = "") {
-  const safeCurrent = Number(current) || 0;
-  const safeMaximum = Number(maximum) || 0;
-  const percent = safeMaximum > 0 ? (safeCurrent / safeMaximum) * 100 : 0;
+function progressRowFromDetail(snapshot, catalog, label, detailKey) {
+  const config = PROGRESS_DETAIL_CONFIG[detailKey];
+  const entities = getProgressDetailEntitiesForSnapshot(snapshot, config).map((entity) => decorateProgressEntity(entity, catalog));
+  const covered = entities.filter((entity) => entity.maximum > 0);
+  const current = covered.reduce((sum, entity) => sum + entity.current, 0);
+  const maximum = covered.reduce((sum, entity) => sum + entity.maximum, 0);
+  const remaining = covered.reduce((sum, entity) => sum + (entity.remaining || 0), 0);
+  const maxedTypes = covered.filter((entity) => entity.isMaxed).length;
   return {
     label,
     detailKey,
-    current: safeCurrent,
-    maximum: safeMaximum,
-    percent,
-    mismatch: safeCurrent > safeMaximum
+    current,
+    maximum,
+    remaining,
+    percent: maximum > 0 ? (current / maximum) * 100 : null,
+    mismatch: covered.some((entity) => entity.mismatch),
+    coveredTypes: covered.length,
+    totalTypes: entities.length,
+    unknownTypes: entities.length - covered.length,
+    maxedTypes
   };
 }
 
@@ -2505,7 +2722,10 @@ function summarizeRows(rows) {
     rows,
     current,
     maximum,
-    percent: maximum > 0 ? (current / maximum) * 100 : 0,
+    remaining: rows.reduce((sum, row) => sum + row.remaining, 0),
+    coveredTypes: rows.reduce((sum, row) => sum + row.coveredTypes, 0),
+    totalTypes: rows.reduce((sum, row) => sum + row.totalTypes, 0),
+    percent: maximum > 0 ? (current / maximum) * 100 : null,
     mismatch: rows.some((row) => row.mismatch)
   };
 }
@@ -3328,7 +3548,7 @@ function createId() {
 }
 
 
-const APP_VERSION = "0.10.0-web-alpha";
+const APP_VERSION = "0.11.0-web-alpha";
 const BACKUP_FORMAT_VERSION = 4;
 
 const STORAGE = {
@@ -3356,6 +3576,7 @@ const state = {
   currentCwlId: localStorage.getItem(STORAGE.currentCwlId) || "",
   warCreateOpen: false,
   exactProgress: null,
+  levelCatalog: null,
   progressStatus: "idle",
   progressError: null,
   plannerTasks: [],
@@ -3818,6 +4039,7 @@ function renderAccountStatus() {
 
 function resetExactProgress() {
   state.exactProgress = null;
+  state.levelCatalog = null;
   state.progressStatus = state.current ? "idle" : "empty";
   state.progressError = null;
 }
@@ -3846,12 +4068,14 @@ async function refreshExactProgress(force = false) {
     }
 
     if (!state.current || `${state.current.tag}:${state.current.timestamp}` !== requestKey) return;
+    state.levelCatalog = maxCounts.entityCatalog;
     state.exactProgress = calculateExactProgress(state.current, maxCounts);
     state.progressStatus = "ready";
     state.progressError = maxCounts.refreshError || null;
   } catch (error) {
     if (!state.current || `${state.current.tag}:${state.current.timestamp}` !== requestKey) return;
     state.exactProgress = null;
+    state.levelCatalog = null;
     state.progressStatus = "error";
     state.progressError = error?.message || "Could not load the max-level catalog.";
   }
@@ -3864,66 +4088,67 @@ function renderExactProgress() {
   els.refreshProgressButton.disabled = state.progressStatus === "loading";
 
   if (!state.current) {
-    els.exactProgress.innerHTML = `<p class="muted">Import a village snapshot to calculate progress against the maximum levels for its TH and BH.</p>`;
+    els.exactProgress.innerHTML = `<p class="muted">Import a village snapshot to compare every detected level with the maximum available for its TH or BH.</p>`;
     return;
   }
 
   if (state.progressStatus === "loading" || state.progressStatus === "idle") {
-    els.exactProgress.innerHTML = `<div class="progress-status"><span class="loading-dot"></span><div><strong>Loading max-level catalog…</strong><small>The first calculation requires an internet connection. Later calculations use the cached catalog.</small></div></div>`;
+    els.exactProgress.innerHTML = `<div class="progress-status"><span class="loading-dot"></span><div><strong>Loading max-level catalog…</strong><small>The first calculation requires an internet connection. The entity catalog is then cached in this browser.</small></div></div>`;
     return;
   }
 
   if (state.progressStatus === "error" || !state.exactProgress) {
-    els.exactProgress.innerHTML = `<div class="progress-status error-state"><div><strong>Exact progress is unavailable</strong><small>${escapeHtml(state.progressError || "Could not load game data.")} The locally calculated level scores and snapshot comparisons still work.</small></div></div>`;
+    els.exactProgress.innerHTML = `<div class="progress-status error-state"><div><strong>Level comparison is unavailable</strong><small>${escapeHtml(state.progressError || "Could not load game data.")} Snapshot history still works, but TH/BH maximums cannot be verified.</small></div></div>`;
     return;
   }
 
   const progress = state.exactProgress;
   const sections = [];
   if (progress.home?.rows?.length) {
-    sections.push(progressSection(`Home Village · TH${state.current.townHall || "?"}`, progress.home, "Core tracked progress"));
+    sections.push(progressSection(`Home Village · TH${state.current.townHall || "?"}`, progress.home, "Level progress against TH maximums"));
   }
   if (progress.builder?.rows?.length) {
-    sections.push(progressSection(`Builder Base · BH${state.current.builderHall || "?"}`, progress.builder, "Tracked progress"));
+    sections.push(progressSection(`Builder Base · BH${state.current.builderHall || "?"}`, progress.builder, "Level progress against BH maximums"));
   }
 
-  const sourceText = `Game data v${progress.dataVersion} · ${progress.cached ? "cached" : "loaded live"} · ${new Date(progress.loadedAt).toLocaleString()}`;
+  const sourceText = `Game data v${progress.dataVersion} · catalog schema ${CATALOG_SCHEMA_VERSION} · ${progress.cached ? "cached" : "loaded live"} · ${new Date(progress.loadedAt).toLocaleString()}`;
   const warning = state.progressError
     ? `<div class="catalog-note warning-note">${escapeHtml(state.progressError)}</div>`
     : "";
   els.exactProgress.innerHTML = `${warning}<div class="exact-progress-grid">${sections.join("")}</div>
-    <div class="catalog-note"><strong>${escapeHtml(sourceText)}</strong><br>Home Village percentage covers structures, traps, laboratory, heroes, equipment, pets, and walls represented by this export. Supercharge levels, crafted-defense modules, and guardians are excluded until their export mappings are verified.</div>`;
+    <div class="catalog-note"><strong>${escapeHtml(sourceText)}</strong><br>Percentages measure level-points, not upgrade time or resource cost. Unknown or unmatched entities are shown in details and excluded from percentages. Supercharge levels, crafted-defense modules, and guardians remain excluded until their export mappings are verified.</div>`;
 }
 
 function progressSection(title, section, subtitle) {
   const overallPercent = clampPercent(section.percent);
+  const coverage = section.totalTypes > 0 ? `${section.coveredTypes}/${section.totalTypes} types matched` : "No catalog matches";
   return `<article class="progress-section">
     <div class="progress-section-header">
       <div><h3>${escapeHtml(title)}</h3><small>${escapeHtml(subtitle)}</small></div>
       <strong class="progress-percent ${section.mismatch ? "delta-negative" : ""}">${formatPercent(section.percent)}</strong>
     </div>
     <div class="progress-overall-track"><div style="width:${overallPercent}%"></div></div>
-    <div class="progress-score">${section.current.toLocaleString()} / ${section.maximum.toLocaleString()} level-points</div>
+    <div class="progress-score">${section.current.toLocaleString()} / ${section.maximum.toLocaleString()} level-points · ${section.remaining.toLocaleString()} remaining · ${escapeHtml(coverage)}</div>
     <div class="progress-rows">${section.rows.map((row) => progressRowHtml(row)).join("")}</div>
-    ${section.mismatch ? '<p class="progress-warning">Some current scores exceed the selected TH/BH catalog. The export or catalog may contain a newer game entity.</p>' : ""}
+    ${section.mismatch ? '<p class="progress-warning">At least one current level is above the matched TH/BH maximum. That item is flagged in the detailed view instead of silently distorting the percentage.</p>' : ""}
   </article>`;
 }
 
 function progressRowHtml(row) {
   const width = clampPercent(row.percent);
   const config = PROGRESS_DETAIL_CONFIG[row.detailKey] || {};
-  const itemCount = countProgressDetailItems(row.detailKey);
-  const itemLabel = itemCount === 1 ? "1 item" : `${itemCount} items`;
+  const coverage = `${row.coveredTypes}/${row.totalTypes} types matched`;
+  const status = row.maximum > 0 ? formatPercent(row.percent) : "—";
   return `<button type="button" class="exact-progress-row progress-detail-trigger" data-progress-detail="${escapeHtml(row.detailKey)}" aria-label="Open ${escapeHtml(row.label)} level details">
     <div class="progress-row-label progress-card-label">
       <span class="progress-card-heading">
         <span class="progress-card-icon">${progressIconSvg(config.icon)}</span>
-        <span class="progress-card-text"><span>${escapeHtml(row.label)}</span><small>${escapeHtml(itemLabel)} · tap to view levels</small></span>
+        <span class="progress-card-text"><span>${escapeHtml(row.label)}</span><small>${escapeHtml(coverage)} · tap for current / TH-BH max</small></span>
       </span>
-      <span style="display:flex;align-items:center;gap:8px"><strong class="${row.mismatch ? "delta-negative" : ""}">${formatPercent(row.percent)}</strong><span class="progress-card-chevron">›</span></span>
+      <span style="display:flex;align-items:center;gap:8px"><strong class="${row.mismatch ? "delta-negative" : ""}">${status}</strong><span class="progress-card-chevron">›</span></span>
     </div>
     <div class="progress-row-track"><div style="width:${width}%"></div></div>
-    <span class="progress-card-footer"><small>${row.current.toLocaleString()} / ${row.maximum.toLocaleString()} level-points</small><small>View details</small></span>
+    <span class="progress-card-footer"><small>${row.maximum > 0 ? `${row.current.toLocaleString()} / ${row.maximum.toLocaleString()} level-points · ${row.remaining.toLocaleString()} remaining` : "Maximum unavailable"}</small><small>View details</small></span>
   </button>`;
 }
 
@@ -3934,8 +4159,13 @@ function countProgressDetailItems(detailKey) {
 }
 
 function getProgressDetailEntities(config) {
-  if (!state.current || !config) return [];
-  const source = config.categories.flatMap((category) => state.current.categories?.[category] || []);
+  return getProgressDetailEntitiesForSnapshot(state.current, config)
+    .map((entity) => decorateProgressEntity(entity, state.levelCatalog));
+}
+
+function getProgressDetailEntitiesForSnapshot(snapshot, config) {
+  if (!snapshot || !config) return [];
+  const source = config.categories.flatMap((category) => snapshot.categories?.[category] || []);
   const filtered = source.filter((item) => {
     if (config.includeSubgroups?.length && !config.includeSubgroups.includes(item.subgroup)) return false;
     if (config.excludeSubgroups?.length && config.excludeSubgroups.includes(item.subgroup)) return false;
@@ -3991,19 +4221,17 @@ function renderProgressDetail() {
   const visibleEntities = allEntities.filter((entity) => progressDetailMatchesFilter(entity, state.progressDetailFilter));
   const exactRow = findExactProgressRow(detailKey);
   const activeCount = allEntities.filter((entity) => entity.activeUpgrade).length;
-  const totalPieces = allEntities.reduce((sum, entity) => sum + entity.totalCount, 0);
-  const trackedCount = config.scoredGroups?.length
-    ? allEntities.filter((entity) => config.scoredGroups.includes(entity.progressGroup)).length
-    : allEntities.length;
+  const coveredCount = allEntities.filter((entity) => entity.maximum > 0).length;
+  const remaining = allEntities.reduce((sum, entity) => sum + (entity.remaining || 0), 0);
 
   els.progressDetailIcon.innerHTML = progressIconSvg(config.icon);
   els.progressDetailTitle.textContent = config.title;
-  els.progressDetailSubtitle.textContent = config.subtitle;
+  els.progressDetailSubtitle.textContent = `${config.subtitle} Maximums are calculated for ${detailContextLabel(detailKey)}.`;
   els.progressDetailSummary.innerHTML = [
-    detailSummaryItem("Detected", `${allEntities.length} types`),
-    detailSummaryItem("Objects", totalPieces.toLocaleString()),
-    detailSummaryItem("Upgrading", activeCount.toLocaleString()),
-    detailSummaryItem("Category", exactRow ? formatPercent(exactRow.percent) : "Snapshot")
+    detailSummaryItem("Level progress", exactRow?.maximum > 0 ? `${exactRow.current.toLocaleString()} / ${exactRow.maximum.toLocaleString()}` : "Unavailable"),
+    detailSummaryItem("Catalog coverage", `${coveredCount} / ${allEntities.length} types`),
+    detailSummaryItem("Levels remaining", exactRow?.maximum > 0 ? remaining.toLocaleString() : "—"),
+    detailSummaryItem("Upgrading", activeCount.toLocaleString())
   ].join("");
 
   const filters = (config.filters || [["all", "All"]]).filter(([key]) => {
@@ -4015,12 +4243,22 @@ function renderProgressDetail() {
     ? filters.map(([key, label]) => `<button type="button" class="detail-filter-button ${state.progressDetailFilter === key ? "active" : ""}" data-progress-detail-filter="${escapeHtml(key)}">${escapeHtml(label)}</button>`).join("")
     : "";
 
-  const note = config.scoredGroups?.length && trackedCount < allEntities.length
-    ? `<div class="cwl-note" style="margin-bottom:12px"><strong>${trackedCount} types</strong> are included in the current structures score. Town Hall and some support buildings are displayed for reference but are not included in that aggregate.</div>`
-    : "";
-  els.progressDetailList.innerHTML = note + (visibleEntities.length
+  const unknownCount = allEntities.length - coveredCount;
+  const notes = [
+    `<div class="cwl-note" style="margin-bottom:12px"><strong>How to read this:</strong> 75 / 100 means the current level is 75 and the maximum available at the detected TH/BH is 100. This is level progress, not time or cost progress.</div>`,
+    unknownCount > 0
+      ? `<div class="cwl-note warning-note" style="margin-bottom:12px"><strong>${unknownCount} unmatched ${unknownCount === 1 ? "type is" : "types are"}</strong> excluded from this percentage. Their current levels remain visible below.</div>`
+      : ""
+  ].join("");
+  els.progressDetailList.innerHTML = notes + (visibleEntities.length
     ? visibleEntities.map((entity) => progressDetailEntityHtml(entity, config)).join("")
     : `<div class="detail-empty">No objects were found for this filter.</div>`);
+}
+
+function detailContextLabel(detailKey) {
+  return detailKey.startsWith("builder")
+    ? `Builder Hall ${state.current?.builderHall || "?"}`
+    : `Town Hall ${state.current?.townHall || "?"}`;
 }
 
 function findExactProgressRow(detailKey) {
@@ -4040,32 +4278,55 @@ function detailSummaryItem(label, value) {
 
 function progressDetailEntityHtml(entity, config) {
   const levels = formatLevelDistribution(entity.levels);
-  const highestLevel = Math.max(0, ...Object.keys(entity.levels || {}).map(Number));
   const active = entity.activeUpgrade;
   const change = state.comparison?.changedEntities?.find((item) => item.identity === entity.identityKey);
   const changeText = change?.delta
     ? `<span class="detail-change">${change.delta > 0 ? "+" : ""}${change.delta} level-points since last import</span>`
     : "No level change in latest comparison";
   const categoryText = progressDetailCategoryText(entity);
-  const scoringExcluded = config.scoredGroups?.length && !config.scoredGroups.includes(entity.progressGroup);
   const activeText = active
-    ? `Upgrading${entity.totalCount === 1 ? ` to Lv ${active.targetLevel}` : " one item"} · ${formatDuration(active.finishAt - Date.now())}`
+    ? `Upgrading${entity.totalCount === 1 ? ` to Lv ${active.targetLevel}${entity.maxLevel ? ` / ${entity.maxLevel}` : ""}` : " one object"} · ${formatDuration(active.finishAt - Date.now())}`
     : "";
   const icon = progressIconSvg(progressDetailEntityIcon(entity));
+  const context = entity.village === "builder" ? `BH${state.current?.builderHall || "?"}` : `TH${state.current?.townHall || "?"}`;
+  const statusChips = [
+    active ? '<span class="detail-chip active">UPGRADING</span>' : "",
+    entity.isMaxed ? '<span class="detail-chip maxed">MAX</span>' : "",
+    entity.mismatch ? '<span class="detail-chip danger">ABOVE CATALOG</span>' : "",
+    !entity.catalogEntry ? '<span class="detail-chip extra">MAX UNKNOWN</span>' : ""
+  ].join("");
 
-  return `<article class="detail-entity-card">
+  let progressBlock;
+  let rightValue;
+  let rightLabel;
+  if (entity.maximum > 0) {
+    const percent = clampPercent(entity.percent);
+    const objectStatus = entity.totalCount > 1
+      ? `${entity.maxedObjects} of ${entity.totalCount} objects at Lv ${entity.maxLevel}`
+      : entity.isMaxed ? `Maximum for ${context}` : `${entity.remaining} levels remaining`;
+    progressBlock = `<div class="detail-level-line"><span>${entity.current.toLocaleString()} / ${entity.maximum.toLocaleString()} level-points</span><strong>${formatPercent(entity.percent)}</strong></div>
+      <div class="detail-level-track"><div style="width:${percent}%"></div></div>
+      <div class="detail-entity-meta">${escapeHtml(objectStatus)} · maximum level ${entity.maxLevel} for ${context}</div>`;
+    rightValue = entity.totalCount > 1 ? `${entity.current} / ${entity.maximum}` : `${Math.max(0, ...Object.keys(entity.levels || {}).map(Number))} / ${entity.maxLevel}`;
+    rightLabel = entity.totalCount > 1 ? "level-points" : `current / ${context} max`;
+  } else {
+    progressBlock = `<div class="detail-unknown-progress"><strong>Current: ${escapeHtml(levels)}</strong><span>Maximum unavailable · excluded from percentage</span></div>`;
+    rightValue = entity.totalCount > 1 ? entity.current.toLocaleString() : `Lv ${Math.max(0, ...Object.keys(entity.levels || {}).map(Number))}`;
+    rightLabel = "current only";
+  }
+
+  return `<article class="detail-entity-card ${entity.maximum > 0 ? "" : "catalog-unmatched"}">
     <div class="detail-entity-icon" aria-hidden="true">${icon}</div>
     <div class="detail-entity-main">
       <div class="detail-entity-name-row">
         <strong>${escapeHtml(entity.name)}</strong>
-        ${active ? '<span class="detail-chip active">UPGRADING</span>' : ""}
-        ${!entity.known ? '<span class="detail-chip extra">UNKNOWN ID</span>' : ""}
-        ${scoringExcluded ? '<span class="detail-chip extra">REFERENCE ONLY</span>' : ""}
+        ${statusChips}
       </div>
       <div class="detail-entity-meta">${escapeHtml(categoryText)} · ${escapeHtml(levels)}${entity.totalCount > 1 ? ` · ${entity.totalCount} objects` : ""}</div>
+      ${progressBlock}
       <div class="detail-entity-meta">${activeText ? `${escapeHtml(activeText)} · ` : ""}${changeText}</div>
     </div>
-    <div class="detail-entity-level"><strong>Lv ${highestLevel}</strong><small>${entity.totalCount > 1 ? "highest level" : "current level"}</small></div>
+    <div class="detail-entity-level"><strong>${escapeHtml(String(rightValue))}</strong><small>${escapeHtml(rightLabel)}</small></div>
   </article>`;
 }
 
@@ -4090,7 +4351,8 @@ function progressDetailEntityIcon(entity) {
 }
 
 function formatPercent(value) {
-  const number = Math.max(0, Number(value) || 0);
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
+  const number = Math.max(0, Number(value));
   const shown = Math.min(100, number);
   return `${shown.toFixed(shown >= 99.95 ? 0 : 1)}%`;
 }

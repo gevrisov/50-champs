@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>50 Champs — Security Test</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin:0; background:#080c18; color:#f4f7ff; min-height:100vh; display:grid; place-items:center; padding:20px; }
+    .card { width:min(680px,100%); background:#11182a; border:1px solid #26314a; border-radius:18px; padding:22px; }
+    h1 { margin:0 0 8px; font-size:24px; }
+    p { color:#97a3ba; line-height:1.5; }
+    button { border:0; border-radius:11px; padding:11px 15px; font-weight:700; background:#6e8cff; color:white; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:wait; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#090e1b; border:1px solid #26314a; border-radius:12px; padding:14px; min-height:150px; }
+    .pass { color:#57d89b; font-weight:800; }
+    .fail { color:#ff7b87; font-weight:800; }
+    a { color:#aebdff; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>50 Champs — RLS Security Test</h1>
+    <p>
+      Run this only while signed in to the Dashboard as the test account whose role should be <strong>user</strong>.
+      This page attempts to change that account's role to <strong>admin</strong>, then verifies the role again.
+    </p>
+    <button id="run">Run role-escalation test</button>
+    <pre id="out">Ready.</pre>
+    <p><a href="./dashboard.html">← Back to Dashboard</a></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://bqdobvylbmwraumyskwn.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_GoaH3fiWP8c-SxbFTOntEQ_QFEime5B";
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const out = document.querySelector("#out");
+    const run = document.querySelector("#run");
+
+    function log(line = "") {
+      out.textContent += (out.textContent ? "\n" : "") + line;
+    }
+
+    async function getOwnRole(userId) {
+      return await client
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+    }
+
+    run.addEventListener("click", async () => {
+      run.disabled = true;
+      out.textContent = "";
+
+      try {
+        const { data: sessionData, error: sessionError } = await client.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        const session = sessionData.session;
+        if (!session?.user) {
+          log("NOT SIGNED IN.");
+          log("Sign in to dashboard.html as the test USER account, then open this page again.");
+          return;
+        }
+
+        log(`Signed in as: ${session.user.email}`);
+
+        const before = await getOwnRole(session.user.id);
+        if (before.error) throw before.error;
+        log(`Role before test: ${before.data?.role ?? "unknown"}`);
+
+        if (before.data?.role !== "user") {
+          log("");
+          log("STOPPED: this is not a normal user account.");
+          log("Do not run the escalation test against an admin account.");
+          return;
+        }
+
+        log("");
+        log("Attempting: user → admin ...");
+
+        const attempt = await client
+          .from("user_roles")
+          .update({ role: "admin" })
+          .eq("user_id", session.user.id)
+          .select("role");
+
+        if (attempt.error) {
+          log(`Server response: ${attempt.error.message}`);
+        } else {
+          log(`Rows changed/returned: ${Array.isArray(attempt.data) ? attempt.data.length : 0}`);
+        }
+
+        const after = await getOwnRole(session.user.id);
+        if (after.error) throw after.error;
+        log(`Role after test: ${after.data?.role ?? "unknown"}`);
+        log("");
+
+        if (after.data?.role === "user") {
+          log("PASS — RLS BLOCKED ROLE ESCALATION.");
+          out.classList.add("pass");
+          out.classList.remove("fail");
+        } else {
+          log("FAIL — ROLE CHANGED. SECURITY POLICY NEEDS FIXING.");
+          out.classList.add("fail");
+          out.classList.remove("pass");
+        }
+      } catch (err) {
+        log(`ERROR: ${err?.message || String(err)}`);
+      } finally {
+        run.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

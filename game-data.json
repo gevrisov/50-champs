@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-09-16.2",
+  "verifiedThrough": "2026-09-16",
+  "baseCatalog": {
+    "package": "clash-of-clans-data",
+    "version": "0.16.0"
+  },
+  "notes": "Verified override layer for current permanent Home Village maximums and post-base-catalog levels. Supercharge levels are intentionally excluded.",
+  "sources": [
+    {
+      "id": "supercell-sound-2026-04",
+      "label": "Supercell — The Sound of Clash Update"
+    },
+    {
+      "id": "supercell-anime-2026-06",
+      "label": "Supercell — The Anime Fury Update"
+    },
+    {
+      "id": "supercell-september-2026",
+      "label": "Supercell Support — What's New? September 2026"
+    },
+    {
+      "id": "clash-ninja-april-2026",
+      "label": "Clash Ninja — April 2026 update (Town Hall qualifiers)"
+    },
+    {
+      "id": "clash-ninja-june-2026",
+      "label": "Clash Ninja — June 2026 update (Town Hall qualifiers)"
+    },
+    {
+      "id": "clash-data-main-2026-09",
+      "label": "clash-of-clans-data main — current entity data (Sep 2026)"
+    }
+  ],
+  "overrides": [
+    {
+      "category": "buildings",
+      "dataId": 1000014,
+      "displayName": "Clan Castle",
+      "names": [
+        "clancastle"
+      ],
+      "maxLevel": 14,
+      "minTownHall": 18,
+      "source": "clash-data-main-2026-09"
+    },
+    {
+      "category": "buildings",
+      "dataId": 1000093,
+      "displayName": "Helper Hut",
+      "names": [
+        "helperhut"
+      ],
+      "maxLevel": 1,
+      "minTownHall": 9,
+      "source": "clash-data-main-2026-09"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "workshop",
+        "siegeworkshop"
+      ],
+      "maxLevel": 9,
+      "minTownHall": 17,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "armycamp"
+      ],
+      "maxLevel": 14,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "blacksmith"
+      ],
+      "maxLevel": 10,
+      "minTownHall": 17,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "xbow"
+      ],
+      "maxLevel": 13,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "scattershot"
+      ],
+      "maxLevel": 7,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "traps",
+      "names": [
+        "giantbomb"
+      ],
+      "maxLevel": 12,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "barbarian"
+      ],
+      "maxLevel": 13,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "goblin"
+      ],
+      "maxLevel": 10,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "valkyrie"
+      ],
+      "maxLevel": 12,
+      "minTownHall": 17,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "golem"
+      ],
+      "maxLevel": 15,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "dragon"
+      ],
+      "maxLevel": 13,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "balloon"
+      ],
+      "maxLevel": 13,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "yeti"
+      ],
+      "maxLevel": 8,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "headhunter"
+      ],
+      "maxLevel": 4,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "rootrider"
+      ],
+      "maxLevel": 4,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "units",
+      "names": [
+        "druid"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "siege_machines",
+      "names": [
+        "battledrill"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "siege_machines",
+      "names": [
+        "siegebarracks"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "siege_machines",
+      "names": [
+        "loglauncher"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "siege_machines",
+      "names": [
+        "battleblimp"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "rage",
+        "ragespell"
+      ],
+      "maxLevel": 7,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "freeze",
+        "freezespell"
+      ],
+      "maxLevel": 8,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "clone",
+        "clonespell"
+      ],
+      "maxLevel": 9,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "recall",
+        "recallspell"
+      ],
+      "maxLevel": 7,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "overgrowth",
+        "overgrowthspell"
+      ],
+      "maxLevel": 5,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "iceblock",
+        "iceblockspell"
+      ],
+      "maxLevel": 6,
+      "minTownHall": 18,
+      "source": "supercell-sound-2026-04"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "monolith"
+      ],
+      "maxLevel": 5,
+      "minTownHall": 18,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "buildershut",
+        "builderhut"
+      ],
+      "maxLevel": 8,
+      "minTownHall": 18,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "darkspellfactory"
+      ],
+      "maxLevel": 8,
+      "minTownHall": 15,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "buildings",
+      "names": [
+        "darkbarracks"
+      ],
+      "maxLevel": 13,
+      "minTownHall": 16,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "heroes",
+      "names": [
+        "barbarianking"
+      ],
+      "maxLevel": 110,
+      "minTownHall": 18,
+      "minHeroHall": 12,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "heroes",
+      "names": [
+        "archerqueen"
+      ],
+      "maxLevel": 110,
+      "minTownHall": 18,
+      "minHeroHall": 12,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "heroes",
+      "names": [
+        "grandwarden"
+      ],
+      "maxLevel": 85,
+      "minTownHall": 18,
+      "minHeroHall": 12,
+      "source": "supercell-anime-2026-06"
+    },
+    {
+      "category": "units",
+      "names": [
+        "ruinwitch"
+      ],
+      "townHallCaps": {
+        "16": 2,
+        "17": 3,
+        "18": 4
+      },
+      "source": "clash-ninja-june-2026",
+      "dataId": 4000109,
+      "displayName": "Ruin Witch"
+    },
+    {
+      "category": "spells",
+      "names": [
+        "angry",
+        "angryspell"
+      ],
+      "townHallCaps": {
+        "15": 1,
+        "16": 2,
+        "17": 3,
+        "18": 4
+      },
+      "source": "clash-ninja-june-2026",
+      "dataId": 26000123,
+      "displayName": "Angry Spell"
+    },
+    {
+      "category": "pets",
+      "names": [
+        "diggy"
+      ],
+      "maxLevel": 15,
+      "minTownHall": 18,
+      "minPetHouse": 12,
+      "source": "supercell-september-2026",
+      "dataId": 73000008,
+      "displayName": "Diggy"
+    }
+  ]
+}

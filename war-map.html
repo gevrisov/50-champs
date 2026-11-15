@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>War Map · 50 Champs</title>
+<meta name="theme-color" content="#070b16">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root { color-scheme: dark; --bg:#070b16; --panel:#11182a; --soft:#161f35; --line:#27324a; --text:#f4f7ff; --muted:#93a0b8; --accent:#6e8cff; --gold:#ffd166; --green:#57d89b; --amber:#ffb84d; --red:#ff6b7a; --enemy:#ff8a6b; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  .app { height: 100dvh; display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; }
+
+  /* score */
+  .score { flex: none; margin: 8px 8px 6px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+  .side-name { font-weight: 800; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+  .side-score { font-size: 21px; font-weight: 800; }
+  .side-score small { font-size: 11px; color: var(--muted); font-weight: 600; margin: 0 3px; }
+  .them { text-align: right; }
+  .mid { text-align: center; }
+  .timer { font-size: 13px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .mid small { display: block; color: var(--muted); font-size: 10.5px; }
+
+  /* two independent columns */
+  .cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 8px; }
+  .col { min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-radius: 14px; padding: 0 2px 10px; scrollbar-width: none; transition: box-shadow .2s; }
+  .col::-webkit-scrollbar { display: none; }
+  .col-head { position: sticky; top: 0; z-index: 2; padding: 6px 4px; background: var(--bg); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  .col-head b { color: var(--text); font-weight: 800; letter-spacing: .02em; text-transform: none; }
+  .empty { color: var(--muted); font-size: 12px; padding: 14px 6px; text-align: center; }
+
+  .cell { position: relative; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); padding: 7px 8px; margin-bottom: 5px; cursor: pointer; transition: opacity .15s, border-color .15s; }
+  .line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .num { flex: none; min-width: 20px; font-weight: 800; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .line .name { font-size: 13px; }
+  .line .stars { font-size: 13px; letter-spacing: 0; flex: none; }
+  .card-grid { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px; }
+  .who { min-width: 0; display: grid; gap: 5px; }
+  .who .name { font-size: 13px; }
+  .corner { display: grid; justify-items: end; gap: 4px; }
+  .corner .th { font-size: 10px; }
+  .result { display: inline-flex; align-items: center; gap: 5px; }
+  .result .stars { font-size: 13px; letter-spacing: 0; }
+  .result .pct { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  .card-grid.closed .result .pct { color: var(--green); }
+  .line2 { margin-top: 4px; gap: 7px; }
+  .line2 .th { min-width: 38px; text-align: center; }
+  .line2 .pct { margin-left: auto; font-size: 11.5px; font-weight: 700; }
+  .line2.closed .pct { color: var(--green); }
+  .left-dots { flex: none; display: inline-flex; gap: 3px; }
+  .left-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--side-dot); }
+  .left-dots i.used { background: transparent; box-shadow: 0 0 0 1.5px #3a4560 inset; }
+  .us-col { --side-dot: var(--accent); } .them-col { --side-dot: var(--enemy); }
+  .cell.nobody-left { box-shadow: 3px 0 0 var(--red) inset; }
+  .details { margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+  .details .meta { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted); }
+  .cell.dim { opacity: .28; }
+  .cell.target { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .cell.selected { border-color: var(--gold); }
+  .head { display: flex; align-items: center; gap: 6px; }
+  .pos { flex: none; min-width: 26px; height: 22px; display: grid; place-items: center; border-radius: 7px; background: var(--soft); font-weight: 800; font-size: 12px; }
+  .th { flex: none; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 6px; background: rgba(255,255,255,.08); color: var(--muted); }
+  .name { flex: 1; min-width: 0; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stars-line { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .stars { letter-spacing: 1px; font-size: 15px; line-height: 1; }
+  .stars .on { color: var(--gold); } .stars .off { color: #3a4560; }
+  .pct { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .closed .pct { color: var(--green); }
+  .attacks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .res { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; font-size: 10.5px; font-weight: 800; background: rgba(255,255,255,.06); white-space: nowrap; }
+  .res.closed { color: var(--green); background: rgba(87,216,155,.12); }
+  .res.partial { color: var(--amber); background: rgba(255,184,77,.12); }
+  .res.failed { color: var(--red); background: rgba(255,107,122,.12); }
+  .res.loot { color: var(--gold); background: rgba(255,209,102,.12); }
+  .res.left { color: var(--muted); }
+  .nobody { display: inline-block; margin-top: 5px; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; color: var(--red); text-transform: uppercase; }
+  .tag-sec { font-size: 10px; color: var(--muted); margin-top: 5px; }
+
+  /* bottom bar: active filters + one Filter button under the right thumb */
+  .dock { flex: none; padding: 8px 8px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(9,13,26,.97); display: grid; gap: 7px; }
+  .focus-banner { display: none; padding: 7px 11px; border-radius: 12px; background: rgba(110,140,255,.16); border: 1px solid rgba(110,140,255,.45); font-size: 12px; }
+  .focus-banner.show { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .focus-banner button { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 800; cursor: pointer; padding: 4px 2px; }
+  .bar { display: flex; align-items: flex-end; gap: 8px; min-width: 0; }
+  .dock > * { min-width: 0; }
+  .pills { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  .pills::-webkit-scrollbar { display: none; }
+  .pill { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 8px 7px 11px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill button { border: 0; background: rgba(255,255,255,.08); color: var(--muted); width: 22px; height: 22px; border-radius: 50%; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; }
+  .pill.us { border-color: rgba(110,140,255,.5); } .pill.them { border-color: rgba(255,138,107,.5); }
+  .filter-btn { flex: none; min-height: 48px; padding: 0 20px; border-radius: 16px; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 800; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .filter-btn span:not(:empty) { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #fff; color: var(--accent); font-size: 12px; display: grid; place-items: center; }
+  .legend-btn { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-weight: 800; cursor: pointer; }
+  .opt-group { display: grid; gap: 6px; }
+  .opt { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--soft); color: var(--text); font: inherit; cursor: pointer; }
+  .opt .t { flex: 1; min-width: 0; }
+  .opt .t b { display: block; font-size: 14px; }
+  .opt .t small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+  .opt .n { font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .opt .radio { flex: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 0 0 2px var(--line) inset; }
+  .opt.on { border-color: var(--accent); background: rgba(110,140,255,.12); }
+  .opt.on .radio { box-shadow: 0 0 0 5px var(--accent) inset; }
+  .th-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(46px, 1fr)); gap: 5px; }
+  .th-btn { min-width: 64px; min-height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--soft); color: var(--text); font: inherit; font-weight: 800; cursor: pointer; }
+  .th-btn { padding: 6px 2px; min-width: 0; font-size: 13px; }
+  .th-label { margin: 10px 0 6px; font-size: 11px; color: var(--muted); font-weight: 700; }
+  .side-sec { padding: 10px; border-radius: 14px; border: 1px solid var(--line); }
+  .them-sec { border-color: rgba(255,138,107,.35); } .them-sec .sec-title { color: #ffab94; }
+  .us-sec { border-color: rgba(110,140,255,.35); } .us-sec .sec-title { color: #9fb2ff; }
+  .them-sec .opt.on, .them-sec .th-btn.on { border-color: var(--enemy); background: rgba(255,138,107,.12); }
+  .them-sec .opt.on .radio { box-shadow: 0 0 0 5px var(--enemy) inset; }
+  .th-btn small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 2px; white-space: nowrap; }
+  .c-us { color: #9fb2ff; } .c-them { color: #ffab94; }
+  .th-btn.on { border-color: var(--accent); background: rgba(110,140,255,.16); }
+  .sheet-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+  .sheet-actions button { min-height: 46px; padding: 0 18px; border-radius: 14px; font: inherit; font-weight: 800; cursor: pointer; }
+  .btn-ghost { border: 1px solid var(--line); background: none; color: var(--muted); }
+  .btn-main { border: 0; background: var(--accent); color: #fff; flex: 1; }
+  /* bottom sheet */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 9; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 78vh; overflow: auto; background: var(--panel); border-top: 1px solid var(--line); border-radius: 20px 20px 0 0; padding: 14px 16px calc(26px + env(safe-area-inset-bottom)); transform: translateY(105%); transition: transform .22s; max-width: 760px; margin: 0 auto; }
+  .open .sheet { transform: none; } .open .sheet-bg { opacity: 1; pointer-events: auto; }
+  .grab { width: 40px; height: 4px; border-radius: 9px; background: var(--line); margin: 0 auto 12px; }
+  .sheet h3 { margin: 0 0 2px; font-size: 17px; }
+  .sheet .sub { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .sec { margin-top: 12px; }
+  .sec-title { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .pl { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 11px; margin-bottom: 5px; }
+  .pl .name { font-size: 13px; }
+  .pl .why { font-size: 11px; color: var(--muted); }
+  .dots { color: var(--accent); font-size: 12px; letter-spacing: 1px; }
+  .muted-pl { opacity: .55; }
+  .more { width: 100%; text-align: left; background: var(--soft); border: 1px solid var(--line); border-radius: 11px; color: var(--text); font: inherit; font-size: 12px; padding: 11px; cursor: pointer; }
+  .more b { color: var(--accent); }
+  .alert { padding: 9px 11px; border-radius: 11px; background: rgba(255,107,122,.12); border: 1px solid rgba(255,107,122,.4); color: var(--red); font-weight: 700; font-size: 12px; }
+  .assigned { border-color: rgba(110,140,255,.55); background: rgba(110,140,255,.08); }
+  .legend { display: grid; gap: 6px; }
+
+  /* ---- neutral theme: no side colours, one light accent ---- */
+  :root { --accent: #e7eaf2; --enemy: #e7eaf2; --gold: #e7eaf2; --green: #ffffff; --hi: rgba(255,255,255,.10); }
+  .timer { color: var(--text); }
+  .stars .on { color: #e7eaf2; } .stars .off { color: #343c52; }
+  .us-col, .them-col { --side-dot: #dfe3ec; }
+  .card-grid.closed .result .pct { color: #fff; }
+  .cell.selected { border-color: #fff; }
+  .cell.target { border-color: #cfd5e2; box-shadow: 0 0 0 1px #cfd5e2 inset; }
+  .cell.nobody-left { box-shadow: 3px 0 0 #8b93a7 inset; }
+  .focus-banner { background: var(--hi); border-color: var(--line); }
+  .focus-banner button { color: var(--text); }
+  .filter-btn { background: #eef1f7; color: #0b1020; }
+  .filter-btn span:not(:empty) { background: #0b1020; color: #fff; }
+  .pill, .pill.us, .pill.them { border-color: var(--line); }
+  .side-sec, .them-sec, .us-sec { border-color: var(--line); }
+  .them-sec .sec-title, .us-sec .sec-title { color: var(--muted); }
+  .opt.on, .them-sec .opt.on, .th-btn.on, .them-sec .th-btn.on { border-color: #cfd5e2; background: var(--hi); }
+  .opt.on .radio, .them-sec .opt.on .radio { box-shadow: 0 0 0 5px #e7eaf2 inset; }
+  .btn-main { background: #eef1f7; color: #0b1020; }
+  .more b, .dots { color: var(--text); }
+  .assigned { border-color: #cfd5e2; background: var(--hi); }
+  .alert { background: var(--hi); border-color: var(--line); color: var(--text); }
+  .res.closed, .res.partial, .res.failed, .res.loot { color: var(--text); background: rgba(255,255,255,.07); }
+  .card-grid.mirror { grid-template-columns: auto 1fr auto; }
+  .card-grid.mirror .who { justify-items: end; text-align: right; }
+  .card-grid.mirror .corner { justify-items: start; }
+  .card-grid.mirror .num { text-align: right; }
+  .them-col .cell.nobody-left { box-shadow: -3px 0 0 #8b93a7 inset; }
+  .card-grid .result .pct { color: #ffffff; }
+  .card-grid.closed .result .pct { color: #6b7389; }
+  .card-grid.closed .stars .on { color: #5a6278; }
+  .card-grid.closed .name { color: #7f879b; font-weight: 600; }
+  .card-grid.closed .th { color: #6b7389; background: rgba(255,255,255,.04); }
+  .cell:has(.card-grid.closed) { background: #0f1424; }
+  .cell:has(.card-grid:not(.closed)) { border-color: #2f3850; }
+  #us-col .card-grid .result .pct { color: #7f879b; }
+  #us-col .card-grid .stars .on { color: #6b7389; }
+  #us-col .card-grid .name { color: #dfe3ec; font-weight: 700; }
+  #us-col .card-grid .th { color: #6b7389; background: rgba(255,255,255,.04); }
+  #us-col .cell { background: var(--panel); border-color: var(--line); }
+  #us-col .cell.selected { border-color: #cfd5e2; }
+  #us-col .cell.selected .name { color: #fff; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; text-align: center; background: var(--soft); }
+  .stat b { display: block; font-size: 16px; }
+  .stat span { font-size: 10px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 11px; margin-bottom: 5px; }
+  .row-main { flex: 1; min-width: 0; }
+  .row .why { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .row-res { display: grid; justify-items: end; gap: 1px; }
+  .row-res .stars { font-size: 13px; } .row-res small { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .empty-row { border-style: dashed; }
+  .sheet .stars .on { color: #e7eaf2; }
+  .sheet .stars .had { color: #7c8499; }
+  .sheet .stars .off { color: #262c3d; }
+  .stat b small { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .sheet h3 { margin-bottom: 12px; }
+  .row.best-row { border-color: #cfd5e2; background: rgba(255,255,255,.06); }
+  .row.dim-row { opacity: .55; }
+  .score > div:first-child { text-align: right; }
+  .score .them { text-align: left; }
+  .col-head { gap: 8px; align-items: baseline; }
+  .col-head .clan { font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score { padding: 10px 14px; }
+  .timer { font-size: 20px; white-space: nowrap; }
+  .side-score { white-space: nowrap; }
+  .mid small { font-size: 11px; margin-top: 1px; }
+  .side-score { font-size: 23px; }
+  .timer { font-size: clamp(16px, 5.1vw, 20px); }
+  .side-score { font-size: clamp(18px, 5.9vw, 23px); }
+  .side-score small { font-size: clamp(9.5px, 2.8vw, 11px); margin: 0 2px; }
+  .score { gap: clamp(4px, 2.6vw, 12px); padding: 10px clamp(8px, 3vw, 14px); }
+  /* enemy base still below 3★: warning tone */
+  #them-col .card-grid:not(.closed) .stars .on { color: #ffb547; }
+  #them-col .card-grid.closed .stars .on { color: #4f8a6d; }
+  /* base nobody has hit yet */
+  .card-grid .pct.not-hit { color: var(--muted); font-weight: 800; }
+  /* drag the sheet's top (handle + title) down to close it */
+  .sheet .grab { width: auto; height: 26px; margin: -14px -16px 0; background: none; border-radius: 0; cursor: grab; touch-action: none; display: grid; place-items: center; }
+  .sheet .grab::before { content: ""; width: 40px; height: 4px; border-radius: 9px; background: var(--line); }
+  .sheet #sheet-body > h3 { touch-action: none; cursor: grab; }
+  .sheet.dragging { transition: none; }
+  .sheet .alert { margin: 10px 0 2px; position: static; display: flex; gap: 8px; align-items: flex-start; font-size: 12px; font-weight: 600; line-height: 1.35; color: var(--muted); }
+  .sheet .alert::before { content: "!"; flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--line); color: var(--text); font-weight: 900; font-size: 11px; }
+  .sheet .stats + .sec, .sheet .alert + .sec { margin-top: 14px; }
+  .more-btn { display: block; width: 100%; margin-top: 2px; padding: 9px; border: 0; border-radius: 11px; background: none; color: var(--muted); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .more-btn:active { background: var(--soft); }
+  /* equal row height whether a row has a second line or not */
+  .sheet .row { min-height: 58px; box-sizing: border-box; }
+  .row.ghost, .more-btn.ghost { visibility: hidden; }
+  .empty-note { min-height: 58px; box-sizing: border-box; margin-bottom: 5px; display: flex; align-items: center; padding: 0 12px; border: 1px dashed var(--line); border-radius: 11px; color: var(--muted); font-size: 12px; }
+  .sheet h3 { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .sheet h3 .assign { margin-left: auto; max-width: 45%; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; }
+  .sheet h3 { height: 26px; }
+  .sheet h3 .assign { line-height: 16px; padding: 2px 9px; }
+  .sheet .row .why, .sheet .row .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sheet { overscroll-behavior: contain; }
+  .sheet .grab { position: sticky; top: -14px; z-index: 3; background: var(--panel); }
+  .th-grid { display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 2px; scroll-padding: 0 16px; -webkit-overflow-scrolling: touch; }
+  .th-grid::-webkit-scrollbar { display: none; }
+  .th-grid .th-btn { flex: 0 0 auto; min-width: 54px; }
+  .th-btn:disabled { opacity: .35; }
+  .col-head > span:not(.clan) { white-space: nowrap; flex: none; }
+  .mid .used { font-size: clamp(14px, 4.2vw, 16px); font-weight: 800; white-space: nowrap; }
+  .bar { align-items: center; }
+  .dock-timer { display: grid; line-height: 1.1; }
+  .dock-timer .timer { font-size: 17px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .dock-timer small { color: var(--muted); font-size: 10.5px; font-weight: 600; }
+  /* bigger for arm's-length reading */
+  .card-grid .who .name { font-size: clamp(13.5px, 3.9vw, 15px); }
+  .card-grid .result .stars { font-size: clamp(14px, 4.2vw, 16.5px); letter-spacing: -.02em; }
+  .card-grid .result .pct { font-size: clamp(11.5px, 3.3vw, 12.5px); }
+  .card-grid .result { gap: 4px; }
+  .card-grid { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "num l1" "num l2"; row-gap: 5px; column-gap: 7px; }
+  .card-grid.mirror { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l1 num" "l2 num"; }
+  .card-grid .num { grid-area: num; }
+  .card-grid .ln { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .card-grid .ln:nth-of-type(1) { grid-area: l1; } .card-grid .ln:nth-of-type(2) { grid-area: l2; }
+  .card-grid .ln .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-grid .ln .th, .card-grid .ln .result { margin-left: auto; flex: none; }
+  .card-grid .left-dots { flex: none; }
+  .card-grid.mirror .ln { flex-direction: row-reverse; }
+  .card-grid.mirror .ln .th, .card-grid.mirror .ln .result { margin-left: 0; margin-right: auto; }
+  .card-grid.mirror .ln .name { text-align: right; }
+  .card-grid .ln .name { font-size: clamp(13.5px, 3.9vw, 15px); font-weight: 700; }
+  .card-grid .ln .th { font-size: 10px; }
+  .mid .vs { display: block; width: 1px; height: 30px; margin: 0 auto; background: var(--line); }
+  .back-btn { display: grid; place-items: center; text-decoration: none; font-size: 22px; line-height: 1; padding-bottom: 2px; }
+  .msg { position: fixed; inset: 0; z-index: 40; display: none; place-items: center; padding: 24px; background: var(--bg); text-align: center; }
+  .msg.show { display: grid; }
+  .msg b { font-size: 17px; } .msg p { color: var(--muted); margin: 8px 0 16px; }
+  .msg-link { display: inline-block; padding: 10px 16px; border-radius: 12px; background: #eef1f7; color: #0b1020; font-weight: 800; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="score">
+    <div><div class="side-score" id="us-score"></div></div>
+    <div class="mid"><span class="vs"></span></div>
+    <div class="them"><div class="side-score" id="them-score"></div></div>
+  </div>
+  <div class="cols">
+    <div class="col us-col" id="us-col"></div>
+    <div class="col them-col" id="them-col"></div>
+  </div>
+  <div class="dock" id="dock">
+    <div class="focus-banner" id="focus"><span id="focus-text"></span><button id="focus-clear">Clear</button></div>
+    <div class="bar">
+      <a class="legend-btn back-btn" href="dashboard.html" aria-label="Back to dashboard">‹</a>
+      <button class="legend-btn" id="legend-btn" aria-label="Legend">?</button>
+      <div class="dock-timer"><span class="timer" id="timer"></span><small id="timer-label"></small></div>
+      <div class="pills" id="pills"></div>
+      <button class="filter-btn" id="filter-btn">Filter<span id="filter-count"></span></button>
+    </div>
+  </div>
+</div>
+<div class="msg show" id="msg"><div><b id="msg-title">Loading war…</b><p id="msg-text"></p><a class="msg-link" id="msg-link" href="dashboard.html" hidden>Open the dashboard</a></div></div>
+<div id="sheet-root"><div class="sheet-bg" id="sheet-bg"></div><div class="sheet" id="sheet"><div class="grab"></div><div id="sheet-body"></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script>
+// ---------- live data (war-stats saves the war every ~2 min; read through clan_war_map) ----------
+const SUPABASE_URL = "https://bqdobvylbmwraumyskwn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_GoaH3fiWP8c-SxbFTOntEQ_QFEime5B";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+});
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+let SIZE = 0, APM = 2;
+let us = [], them = [], best = new Map(), usBest = new Map(), assignments = new Map();
+let WAR = null;
+
+function clanIdFromPage() {
+  const fromUrl = new URLSearchParams(location.search).get("clan");
+  if (fromUrl) return fromUrl;
+  try { return JSON.parse(localStorage.getItem("ccc:connected-clan") || "null")?.id || ""; } catch { return ""; }
+}
+
+// Turns the RPC answer into the two columns the map draws.
+function buildModel(data) {
+  const w = data.war;
+  WAR = w;
+  APM = Number(w.attacks_per_member) || (w.war_type === "cwl" ? 1 : 2);
+  const byPos = (a, b) => (Number(a.pos) || 999) - (Number(b.pos) || 999);
+  us = [...(w.members || [])].sort(byPos).map((m, i) => ({ pos: i + 1, tag: m.tag, name: esc(m.name || m.tag), th: Number(m.th) || 0, attacks: [], defenses: [] }));
+  them = [...(w.enemy_members || [])].sort(byPos).map((m, i) => ({ pos: i + 1, tag: m.tag, name: esc(m.name || m.tag), th: Number(m.th) || 0, apiUsed: Number(m.attacksUsed) || 0, mapPos: Number(m.pos) || i + 1, attempts: [], hits: [] }));
+  SIZE = Math.max(us.length, them.length);
+  const ourByTag = new Map(us.map((p) => [p.tag, p]));
+  const enemyByTag = new Map(them.map((t) => [t.tag, t]));
+  best = new Map(); usBest = new Map(); assignments = new Map();
+
+  for (const a of data.attacks || []) {
+    const p = ourByTag.get(a.attacker_tag), t = enemyByTag.get(a.defender_tag);
+    if (!p || !t) continue;
+    const stars = Number(a.stars) || 0, pct = Math.round(Number(a.pct) || 0);
+    const kind = Number(a.best_before) >= 3 ? "loot" : Number(a.new_stars) > 0 ? (stars === 3 ? "closed" : "partial") : "failed";
+    p.attacks.push({ target: t.pos, stars, pct, kind, order: Number(a.order) || 0 });
+    t.attempts.push({ by: p.pos, stars, pct, kind });
+    const b = best.get(t.pos) || { stars: 0, pct: 0 };
+    if (stars > b.stars || (stars === b.stars && pct > b.pct)) best.set(t.pos, { stars, pct });
+  }
+  for (const a of w.enemy_attacks || []) {
+    const e = enemyByTag.get(a.attacker_tag), p = ourByTag.get(a.defender_tag);
+    if (!e || !p) continue;
+    const stars = Number(a.stars) || 0, pct = Math.round(Number(a.pct) || 0);
+    p.defenses.push({ by: e.pos, stars, pct });
+    e.hits.push({ on: p.pos, stars, pct });
+    const b = usBest.get(p.pos) || { stars: 0, pct: 0 };
+    if (stars > b.stars || (stars === b.stars && pct > b.pct)) usBest.set(p.pos, { stars, pct });
+  }
+  them.forEach((t) => { t.used = Math.max(t.hits.length, t.apiUsed); });
+  // War Room plan: enemy map position -> our player.
+  for (const x of data.assignments || []) {
+    const p = ourByTag.get(x.tag), t = them.find((e) => e.mapPos === Number(x.target));
+    if (p && t && !assignments.has(t.pos)) assignments.set(t.pos, p.pos);
+  }
+}
+
+// ---------- logic ----------
+const attacksLeft = (p) => Math.max(0, APM - p.attacks.length);
+const baseBest = (t) => best.get(t.pos) || { stars: 0, pct: 0 };
+const isOpen = (t) => baseBest(t).stars < 3;
+// Who can still hit this base: attacks left AND hasn't hit this exact base yet.
+function canHit(t) {
+  return us.filter((p) => attacksLeft(p) > 0 && !p.attacks.some((a) => a.target === t.pos));
+}
+const nobodyLeft = (t) => isOpen(t) && canHit(t).length === 0;
+
+// ---------- rendering ----------
+const state = { us: "all", them: "all", thUs: new Set(), thThem: new Set(), focusUs: null, sheetUs: null };
+// Enemy attacks come from the hits on our bases: who hit whom, with what result.
+const dotsHtml = (left, total = APM) => { left = Math.max(0, Math.min(total, left)); return `<span class="left-dots" title="${left} attack${left === 1 ? "" : "s"} left">${"<i></i>".repeat(left)}${"<i class=\"used\"></i>".repeat(total - left)}</span>`; };
+const $ = (s) => document.querySelector(s);
+const KIND_ICON = { closed: "🟢", partial: "🟡", failed: "🔴", loot: "💰" };
+const starsHtml = (n) => `<span class="stars">${[0,1,2].map((i) => `<span class="${i < n ? "on" : "off"}">★</span>`).join("")}</span>`;
+const resHtml = (a) => `<span class="res ${a.kind}">${KIND_ICON[a.kind]} #${a.target} ${"★".repeat(a.stars)}${"☆".repeat(3 - a.stars)}</span>`;
+
+const US_OPTS = {
+  all: ["All players", ""],
+  left: ["Has attacks", "Still has at least one attack"],
+  failed: ["Failed", "Made an attack that added no stars"]
+};
+const THEM_OPTS = {
+  all: ["All bases", ""],
+  open: ["Open bases", "Less than 3★ so far"],
+  nobody: ["No one left", "Open, but everyone with attacks already hit it"],
+  untouched: ["Not attacked", "No one has hit this base yet"]
+};
+const usMatch = (p, f = state.us) => f === "all" || (f === "left" && attacksLeft(p) > 0) || (f === "failed" && p.attacks.some((a) => a.kind === "failed"));
+const themMatch = (t, f = state.them) => f === "all" || (f === "open" && isOpen(t)) || (f === "nobody" && nobodyLeft(t)) || (f === "untouched" && !t.attempts.length);
+const thMatchUs = (p) => !state.thUs.size || state.thUs.has(p.th);
+const thMatchThem = (t) => !state.thThem.size || state.thThem.has(t.th);
+const activeCount = () => (state.us !== "all") + (state.them !== "all") + (state.thUs.size ? 1 : 0) + (state.thThem.size ? 1 : 0);
+const thLabel = (set) => [...set].sort((a, b) => b - a).map((th) => "TH" + th).join(", ");
+
+function renderBar() {
+  // Active filters are shown only as the count on the Filter button and "N of 50" in the column heads.
+  $("#filter-count").textContent = activeCount() || "";
+}
+
+function openFilterSheet() {
+  const opt = (group, key, [label, hint], count) => `<button class="opt ${state[group] === key ? "on" : ""}" data-opt="${group}:${key}">
+      <span class="radio"></span><span class="t"><b>${label}</b>${hint ? `<small>${hint}</small>` : ""}</span><span class="n">${count}</span></button>`;
+  const thRow = (side, list, match, set) => {
+    const ths = Array.from({ length: 14 }, (_, i) => 19 - i); // TH19 … TH6, one row that scrolls sideways
+    return `<div class="th-label">Town Hall</div><div class="th-grid" data-th-row="${side}">${ths.map((th) => {
+      const n = list.filter((x) => x.th === th && match(x)).length;
+      return `<button class="th-btn ${set.has(th) ? "on" : ""}" data-th="${side}:${th}" ${n || set.has(th) ? "" : "disabled"}>TH${th}<small>${n}</small></button>`;
+    }).join("")}</div>`;
+  };
+  const html = `<h3>Filter</h3><div class="sub">Each side has its own filters.</div>
+    <div class="sec side-sec them-sec"><div class="sec-title">Enemy bases</div><div class="opt-group">
+      ${Object.entries(THEM_OPTS).map(([k, v]) => opt("them", k, v, them.filter((t) => themMatch(t, k) && thMatchThem(t)).length)).join("")}
+    </div>${thRow("them", them, themMatch, state.thThem)}</div>
+    <div class="sec side-sec us-sec"><div class="sec-title">Our players</div><div class="opt-group">
+      ${Object.entries(US_OPTS).map(([k, v]) => opt("us", k, v, us.filter((p) => usMatch(p, k) && thMatchUs(p)).length)).join("")}
+    </div>${thRow("us", us, usMatch, state.thUs)}</div>
+    <div class="sheet-actions"><button class="btn-ghost" data-reset>Reset</button><button class="btn-main" data-close-sheet>Show</button></div>`;
+  openSheet(html);
+}
+
+// Card: number · name with attacks left under it · corner with Town Hall over "% ★★★".
+function cardBody(pos, name, left, th, b, mirror = false) {
+  const pct = b.untouched ? `<span class="pct not-hit">Not hit</span>` : `<span class="pct">${b.pct ? b.pct + "%" : "—"}</span>`;
+  const res = `<span class="result">${mirror ? starsHtml(b.stars) + pct : pct + starsHtml(b.stars)}</span>`;
+  // line 1: name + TH tag, line 2: attack dots + result
+  return `<div class="card-grid ${b.stars === 3 ? "closed" : ""} ${b.untouched ? "untouched" : ""} ${mirror ? "mirror" : ""}">
+    <span class="num">${pos}</span>
+    <div class="ln"><span class="name">${name}</span><span class="th">TH${th}</span></div>
+    <div class="ln">${dotsHtml(left)}${res}</div>
+  </div>`;
+}
+
+function render() {
+  if (!WAR) return;
+  const pctTxt = (v) => (Number(v) || 0).toFixed(1);
+  const US_CLAN = esc(WAR.clan_name || "Our clan"), THEM_CLAN = esc(WAR.opponent_name || "Opponent");
+  $("#us-score").innerHTML = `<small>${pctTxt(WAR.clan_destruction)}%</small>${Number(WAR.clan_stars) || 0}★`;
+  $("#them-score").innerHTML = `${Number(WAR.opponent_stars) || 0}★<small>${pctTxt(WAR.opponent_destruction)}%</small>`;
+
+  const focus = state.focusUs ? us[state.focusUs - 1] : null;
+  const usList = us.filter((p) => usMatch(p) && thMatchUs(p));
+  const themList = them.filter((t) => themMatch(t) && thMatchThem(t));
+
+  $("#us-col").innerHTML = `<div class="col-head"><span class="clan">${US_CLAN}</span><span>${usList.length < us.length ? `<b>${usList.length}</b> of ${us.length}` : us.length}</span></div>` + (usList.map((p) => {
+    const b = usBest.get(p.pos) || { stars: 0, pct: 0 };
+    const open = state.focusUs === p.pos || state.sheetUs === p.pos;
+    return `<div class="cell ${open ? "selected" : ""}" data-us-pos="${p.pos}">
+      ${cardBody(p.pos, p.name, attacksLeft(p), p.th, b)}
+
+    </div>`;
+  }).join("") || `<div class="empty">No players match.</div>`);
+
+  $("#them-col").innerHTML = `<div class="col-head"><span>${themList.length < them.length ? `<b>${themList.length}</b> of ${them.length}` : them.length}</span><span class="clan">${THEM_CLAN}</span></div>` + (themList.map((t) => {
+    const b = baseBest(t);
+    const canTarget = focus && isOpen(t) && !focus.attacks.some((a) => a.target === t.pos);
+    return `<div class="cell ${focus ? (canTarget ? "target" : "dim") : ""} ${nobodyLeft(t) ? "nobody-left" : ""}" data-them-pos="${t.pos}">
+      ${cardBody(t.pos, t.name, APM - t.used, t.th, { ...b, untouched: !t.attempts.length }, true)}
+    </div>`;
+  }).join("") || `<div class="empty">No bases match.</div>`);
+
+  $("#focus").classList.toggle("show", Boolean(focus));
+  if (focus) {
+    const n = them.filter((t) => isOpen(t) && !focus.attacks.some((a) => a.target === t.pos)).length;
+    $("#focus-text").textContent = `${focus.name} · ${attacksLeft(focus)} left · can still hit ${n} open bases`;
+  }
+  renderBar();
+}
+
+function plRow(p, why, cls = "") {
+  return `<div class="pl ${cls}"><span class="pos">${p.pos}</span><div style="flex:1;min-width:0"><div class="name">${p.name} <span class="th">TH${p.th}</span></div><div class="why">${why}</div></div><span class="dots">${"●".repeat(attacksLeft(p))}${"○".repeat(Math.max(0, APM - attacksLeft(p)))}</span></div>`;
+}
+
+function refreshFilter() {
+  const sheet = $("#sheet"), top = sheet.scrollTop;
+  const lefts = Object.fromEntries([...document.querySelectorAll("[data-th-row]")].map((g) => [g.dataset.thRow, g.scrollLeft]));
+  openFilterSheet();
+  sheet.scrollTop = top;
+  document.querySelectorAll("[data-th-row]").forEach((g) => { g.scrollLeft = lefts[g.dataset.thRow] || 0; });
+}
+function openSheet(html) {
+  const sheet = $("#sheet");
+  sheet.style.height = ""; sheet.scrollTop = 0;
+  $("#sheet-body").innerHTML = html;
+  // Player / base sheets: freeze the height they open with; "more" then scrolls inside.
+  if ($("#sheet-body .stats")) sheet.style.height = sheet.offsetHeight + "px";
+  $("#sheet-root").classList.add("open");
+}
+
+function closeSheet() {
+  $("#sheet-root").classList.remove("open");
+  if (state.sheetUs) { state.sheetUs = null; render(); }
+}
+// New stars an attack added: compare with our best on that base before it.
+function gainOf(a) {
+  const before = us.flatMap((q) => q.attacks).filter((x) => x.target === a.target && x.order < a.order).reduce((m, x) => Math.max(m, x.stars), 0);
+  return Math.max(0, a.stars - before);
+}
+const KIND_TEXT = { closed: "Closed the base", partial: "New stars, still open", failed: "No new stars", loot: "Loot · base was already 3★" };
+// Stars of one attack: the ones this hit added are bright, ones the base already had are dim.
+const gainStarsHtml = (n, gain) => `<span class="stars">${[0,1,2].map((i) => `<span class="${i >= n ? "off" : i >= n - gain ? "on" : "had"}">★</span>`).join("")}</span>`;
+// Lists keep the size of two rows; the rest folds behind "N more".
+// Every info sheet has the same collapsed height (same thumb reach for the swipe):
+// the Defenses block always takes two row slots plus the "more" slot.
+// Best hit (most stars, then %) first; the rest keep their order.
+function bestFirst(list) {
+  if (list.length < 2) return list.slice();
+  const bi = list.reduce((b, x, i) => (x.stars > list[b].stars || (x.stars === list[b].stars && x.pct > list[b].pct) ? i : b), 0);
+  return [list[bi], ...list.filter((_, i) => i !== bi)];
+}
+// One row (the best) + a "more" slot; empty lists keep the same height.
+const unusedRows = (n) => Array.from({ length: Math.max(0, n) }, () => `<div class="row empty-row"><span class="pos">○</span><div class="row-main"><div class="why">Attack not used yet</div></div></div>`).join("");
+function listSection(title, rows, id, emptyText) {
+  return `<div class="sec"><div class="sec-title">${title}</div>${rows.length ? capRows(rows, id, 1) : `<div class="empty-note">${emptyText}</div>` + capRows([], "", 0)}</div>`;
+}
+function capRows(rows, id, keep = 2) {
+  const pad = (n) => Array.from({ length: n }, () => `<div class="row ghost" aria-hidden="true"><span class="pos">0</span><div class="row-main"><div class="name">x</div><div class="why">x</div></div></div>`).join("");
+  if (rows.length <= keep) return rows.join("") + pad(keep - rows.length) + `<div class="more-btn ghost" aria-hidden="true">x</div>`;
+  const more = rows.length - keep;
+  return rows.slice(0, keep).join("") + `<div id="${id}" hidden>${rows.slice(keep).join("")}</div><button class="more-btn" data-toggle="${id}" data-more="${more} more">${more} more</button>`;
+}
+function statBox(value, label) { return `<div class="stat"><b>${value}</b><span>${label}</span></div>`; }
+
+function openPlayerSheet(p) {
+  state.sheetUs = p.pos; render();
+  const gained = p.attacks.reduce((s, a) => s + gainOf(a), 0);
+  let html = `<h3>#${p.pos} ${p.name} <span class="th">TH${p.th}</span></h3>
+    <div class="stats">${statBox(p.attacks.length + "/" + APM, "attacks")}${statBox(gained + "★", "new stars")}${statBox(p.defenses.length, "times attacked")}</div>`;
+  const myAtt = p.attacks.slice().sort((a, b) => a.order - b.order);
+  const hbA = bestFirst(myAtt)[0];
+  html += `<div class="sec"><div class="sec-title">Attacks</div>${myAtt.map((a, i) => {
+    const t = them[a.target - 1]; const g = gainOf(a); const isBest = myAtt.length > 1 && a === hbA;
+    return `<div class="row ${myAtt.length > 1 ? (isBest ? "best-row" : "dim-row") : ""}"><span class="pos">${i + 1}</span><div class="row-main"><div class="name">#${t.pos} ${t.name} <span class="th">TH${t.th}</span></div><div class="why">${isBest ? "Best attack · " : ""}${KIND_ICON[a.kind]} ${KIND_TEXT[a.kind]}${g ? ` · +${g}★` : ""}</div></div><div class="row-res">${gainStarsHtml(a.stars, g)}<small>${a.pct}%</small></div></div>`;
+  }).join("")}${unusedRows(APM - myAtt.length)}</div>`;
+  html += listSection("Defenses", bestFirst(p.defenses).map((d, i, arr) => {
+    const e = them[d.by - 1]; const isBest = arr.length > 1 && i === 0;
+    return `<div class="row ${arr.length > 1 ? (isBest ? "best-row" : "dim-row") : ""}"><span class="pos">${e.pos}</span><div class="row-main"><div class="name">${e.name} <span class="th">TH${e.th}</span></div>${isBest ? `<div class="why">Best attack</div>` : ""}</div><div class="row-res">${starsHtml(d.stars)}<small>${d.pct}%</small></div></div>`;
+  }), "more-def", "Not attacked yet");
+  openSheet(html);
+}
+
+function openBaseSheet(t) {
+  const tb = baseBest(t);
+  const hitters = canHit(t);
+  const assignedPos = assignments.get(t.pos);
+  const assigned = assignedPos ? us[assignedPos - 1] : null;
+  const assignedOk = assigned && attacksLeft(assigned) > 0 && !assigned.attacks.some((a) => a.target === t.pos);
+  // Our hits on this base in battle order, each with the stars it added.
+  const hits = t.attempts.map((x) => { const a = us[x.by - 1].attacks.find((y) => y.target === t.pos); return a && { ...a, by: x.by }; }).filter(Boolean).sort((a, b) => a.order - b.order);
+  let html = `<h3>#${t.pos} ${t.name} <span class="th">TH${t.th}</span>${assignedOk && tb.stars < 3 ? `<span class="assign" title="Assigned in War Room">→ ${assigned.name}</span>` : ""}</h3>
+    <div class="stats">${statBox(tb.pct ? `${tb.stars}★ <small>${tb.pct}%</small>` : "—", "our best")}${statBox(hits.length, "times attacked")}${statBox(Math.max(0, APM - t.used), "his attacks left")}</div>`;
+  const hbT = bestFirst(t.hits)[0];
+  html += `<div class="sec"><div class="sec-title">Attacks</div>${t.hits.map((h) => {
+    const p = us[h.on - 1]; const isBest = t.hits.length > 1 && h === hbT;
+    return `<div class="row ${t.hits.length > 1 ? (isBest ? "best-row" : "dim-row") : ""}"><span class="pos">${p.pos}</span><div class="row-main"><div class="name">${p.name} <span class="th">TH${p.th}</span></div>${isBest ? `<div class="why">Best attack</div>` : ""}</div><div class="row-res">${starsHtml(h.stars)}<small>${h.pct}%</small></div></div>`;
+  }).join("")}${unusedRows(APM - t.hits.length)}</div>`;
+  html += listSection("Defenses", bestFirst(hits).map((h, i, arr) => {
+    const p = us[h.by - 1]; const g = gainOf(h); const isBest = arr.length > 1 && i === 0;
+    return `<div class="row ${arr.length > 1 ? (isBest ? "best-row" : "dim-row") : ""}"><span class="pos">${p.pos}</span><div class="row-main"><div class="name">${p.name} <span class="th">TH${p.th}</span></div><div class="why">${isBest ? "Best attack · " : ""}${KIND_ICON[h.kind]} ${KIND_TEXT[h.kind]}${g ? ` · +${g}★` : ""}</div></div><div class="row-res">${gainStarsHtml(h.stars, g)}<small>${h.pct}%</small></div></div>`;
+  }), "more-def", "Not attacked yet");
+  openSheet(html);
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#filter-btn")) { openFilterSheet(); return; }
+  const o = e.target.closest("[data-opt]"); if (o) { const [g, k] = o.dataset.opt.split(":"); state[g] = k; render(); refreshFilter(); return; }
+  const th = e.target.closest("[data-th]"); if (th) { const [side, raw] = th.dataset.th.split(":"); const set = side === "us" ? state.thUs : state.thThem; const v = Number(raw); set.has(v) ? set.delete(v) : set.add(v); render(); refreshFilter(); return; }
+  if (e.target.closest("[data-reset]")) { state.us = "all"; state.them = "all"; state.thUs.clear(); state.thThem.clear(); render(); refreshFilter(); return; }
+  if (e.target.closest("[data-close-sheet]")) { closeSheet(); return; }
+  const cl = e.target.closest("[data-clear]"); if (cl) { const g = cl.dataset.clear; if (g === "thUs" || g === "thThem") state[g].clear(); else state[g] = "all"; render(); return; }
+  const tg = e.target.closest("[data-toggle]"); if (tg) {
+    const l = document.getElementById(tg.dataset.toggle); l.hidden = !l.hidden;
+    if (tg.dataset.more) {
+      tg.textContent = l.hidden ? tg.dataset.more : "Show less";
+      const sheet = $("#sheet"); // the window stays put; its content slides up to show the list
+      sheet.scrollTo({ top: l.hidden ? 0 : sheet.scrollHeight, behavior: "smooth" });
+    }
+    return;
+  }
+  if (e.target.closest("#sheet-bg")) { closeSheet(); return; }
+  if (e.target.closest("#focus-clear")) { state.focusUs = null; render(); return; }
+  if (e.target.closest("#legend-btn")) {
+    openSheet(`<h3>Legend</h3><div class="sub">${WAR ? `${esc(WAR.clan_name || "")} vs ${esc(WAR.opponent_name || "")} · ${WAR.war_type === "cwl" ? "CWL" : "Clan war"} · updated ${new Date(WAR.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}<br>Data from the Clash API, refreshed about every 2 minutes.</div><div class="legend">
+      <span class="res closed">🟢 closed the base (3★)</span><span class="res partial">🟡 new stars, base still open</span><span class="res failed">🔴 no new stars on an open base</span><span class="res loot">💰 loot — the base was already 3★</span><span class="res left"><span class="left-dots" style="--side-dot:var(--accent)"><i></i><i class="used"></i></span>&nbsp;attacks left / used</span><span class="res failed">▌grey edge — no one left who can hit this open base</span><span class="res left"><b style="color:#4f8a6d">★★★</b>&nbsp;100% · <b style="color:#ffb547">★★</b>&nbsp;below 100%</span><span class="res left"><b>Not hit</b>&nbsp;— nobody attacked this base yet</span></div>
+      <div class="sec why" style="color:var(--muted);font-size:12px">Our side: the stars are what the enemy took from our base. Enemy side: what we took. Cards stay compact: number, name, stars and attack dots. Tap our player for their attacks and defense; tap an enemy base for our best attack on it and who attacked. The two columns scroll on their own.</div>`);
+    return;
+  }
+  const sm = e.target.closest("[data-show-map]"); if (sm) { state.focusUs = Number(sm.dataset.showMap); closeSheet(); render(); return; }
+  const uc = e.target.closest("[data-us-pos]"); if (uc) { openPlayerSheet(us[Number(uc.dataset.usPos) - 1]); return; }
+  const tc = e.target.closest("[data-them-pos]"); if (tc) openBaseSheet(them[Number(tc.dataset.themPos) - 1]);
+});
+function tick() {
+  if (!WAR) return;
+  const prep = WAR.state === "preparation", ended = WAR.state === "warEnded";
+  const target = Date.parse(prep ? WAR.start_time : WAR.end_time) || 0;
+  const s = Math.max(0, Math.round((target - Date.now()) / 1000));
+  $("#timer").textContent = ended ? "Ended" : `${Math.floor(s / 3600)}h ${String(Math.floor(s / 60) % 60).padStart(2, "0")}m ${String(s % 60).padStart(2, "0")}s`;
+  $("#timer-label").textContent = ended ? "war over" : prep ? "to battle day" : "left";
+}
+tick(); setInterval(tick, 1000);
+function syncHeadHeight() { const h = document.querySelector(".col-head"); if (h) document.documentElement.style.setProperty("--head-h", h.offsetHeight + "px"); }
+syncHeadHeight(); addEventListener("resize", syncHeadHeight);
+// Free native scrolling; only after the list fully stops, ease it to the nearest card edge
+// so both columns line up row by row.
+function settleToRow(col) {
+  const head = col.querySelector(".col-head"), cells = col.querySelectorAll(".cell");
+  if (!cells.length || col.scrollTop + col.clientHeight >= col.scrollHeight - 2) return;
+  const off = head ? head.offsetHeight : 0;
+  let best = 0, bestD = Infinity;
+  const base = col.getBoundingClientRect().top - col.scrollTop;
+  cells.forEach((c) => { const t = c.getBoundingClientRect().top - base - off; const d = Math.abs(t - col.scrollTop); if (d < bestD) { bestD = d; best = t; } });
+  if (bestD > 1) col.scrollTo({ top: Math.max(0, best), behavior: "smooth" });
+}
+document.querySelectorAll(".col").forEach((col) => {
+  let timer = 0, touching = false, lastTouch = 0;
+  const later = (ms = 160) => { clearTimeout(timer); if (!touching) timer = setTimeout(() => settleToRow(col), ms); };
+  const release = () => { touching = false; later(); };
+  col.addEventListener("touchstart", () => { touching = true; lastTouch = Date.now(); clearTimeout(timer); }, { passive: true });
+  col.addEventListener("touchend", release, { passive: true });
+  col.addEventListener("touchcancel", release, { passive: true });
+  // Some phones never send touchend once native scrolling takes over: don't wait forever.
+  col.addEventListener("scroll", () => { if (touching && Date.now() - lastTouch > 1200) touching = false; later(); }, { passive: true });
+  col.addEventListener("scrollend", () => { touching = false; later(40); });
+});
+(() => {
+  const sheet = $("#sheet"), bg = $("#sheet-bg");
+  let startY = 0, lastY = 0, lastT = 0, speed = 0, dy = 0, active = false;
+  const inHeader = (el) => el.closest(".grab") || el.closest("#sheet-body > h3");
+  sheet.addEventListener("pointerdown", (e) => {
+    if (!inHeader(e.target) || !$("#sheet-root").classList.contains("open")) return;
+    active = true; startY = lastY = e.clientY; lastT = e.timeStamp; speed = 0; dy = 0;
+    sheet.classList.add("dragging"); sheet.setPointerCapture(e.pointerId);
+  });
+  sheet.addEventListener("pointermove", (e) => {
+    if (!active) return;
+    dy = Math.max(0, e.clientY - startY);
+    const dt = e.timeStamp - lastT; if (dt > 0) speed = (e.clientY - lastY) / dt;
+    lastY = e.clientY; lastT = e.timeStamp;
+    sheet.style.transform = `translateY(${dy}px)`;
+    bg.style.opacity = String(Math.max(0, 1 - dy / sheet.offsetHeight));
+  });
+  const end = () => {
+    if (!active) return;
+    active = false; sheet.classList.remove("dragging");
+    const close = dy > Math.min(120, sheet.offsetHeight * .3) || speed > .6;
+    sheet.style.transform = ""; bg.style.opacity = "";
+    if (close) closeSheet();
+  };
+  sheet.addEventListener("pointerup", end);
+  sheet.addEventListener("pointercancel", end);
+})();
+// ---------- loading ----------
+function showMsg(title, text = "", link = false) {
+  $("#msg").classList.toggle("show", Boolean(title));
+  $("#msg-title").textContent = title || ""; $("#msg-text").textContent = text; $("#msg-link").hidden = !link;
+}
+let loading = false;
+async function load() {
+  if (loading) return; loading = true;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { showMsg("Sign in first", "Open the dashboard, sign in, then come back to the war map.", true); return; }
+    const clanId = clanIdFromPage();
+    if (!clanId) { showMsg("No clan selected", "Open your clan on the dashboard first.", true); return; }
+    const { data, error } = await sb.rpc("clan_war_map", { p_clan_id: clanId });
+    if (error) {
+      const denied = /access|42501|permission/i.test(`${error.code} ${error.message}`);
+      showMsg(denied ? "No access to this clan" : "Could not load the war", denied ? "Only members of this clan can see its war map." : error.message, true);
+      return;
+    }
+    if (!data?.war || !(data.war.members || []).length) {
+      showMsg("No war yet", "The map fills in a few minutes after your clan's war or CWL day starts.", true);
+      return;
+    }
+    buildModel(data);
+    showMsg("");
+    render(); tick(); syncHeadHeight();
+  } catch (e) {
+    showMsg("Could not load the war", String(e?.message || e), true);
+  } finally { loading = false; }
+}
+load();
+setInterval(() => { if (!document.hidden) load(); }, 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>

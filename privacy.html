@@ -13,16 +13,24 @@
 <body><main class="wrap">
   <p><a href="./">← Back to 50 Champs</a></p>
   <h1>Privacy notice</h1>
-  <div class="box"><strong>Current alpha:</strong> village snapshots, upgrade plans, clan members, war records, and CWL seasons are stored in your browser on your device. This version has no user accounts and no 50 Champs cloud database.</div>
-  <h2>Data handled locally</h2>
-  <p>The application reads the village JSON you choose to import and stores the resulting data in browser local storage. Downloaded backup files are created only when you request them.</p>
-  <h2>External network request</h2>
-  <p>The application may request a pinned public game-data catalog from jsDelivr to calculate category progress. Previously calculated summaries may be cached locally.</p>
+  <div class="box"><strong>In short:</strong> 50 Champs has user accounts. Your account, your verified game accounts, and your clan's shared data (roster, war plans, CWL seasons, and roles) are stored in the 50 Champs database, hosted by Supabase. Village imports and upgrade plans stay in your browser.</div>
+  <h2>Your account</h2>
+  <p>You sign in with a username and password. No email address is required. Passwords are handled by the authentication service and are never visible to 50 Champs administrators. One-time recovery codes are stored only as hashes. Security events such as sign-ins, password resets, and role changes are recorded in an audit log.</p>
+  <h2>Linked game accounts</h2>
+  <p>When you link a Clash of Clans account, you enter its player tag and the API token from the game settings. The token is sent once to the official Clash of Clans API to confirm the account is yours, and it is not stored. We keep the player tag, player name, and the time it was verified.</p>
+  <h2>Clan data</h2>
+  <p>For clans you open, we store public game data from the Clash of Clans API, such as clan name, members, roles, war results, and when members join or leave. We also store what your leadership team enters: war target assignments and notes, recorded attacks, CWL scores, departure reasons and comments, and site roles. Members of the clan can see this data based on their role.</p>
+  <h2>Data kept in your browser</h2>
+  <p>Village JSON imports, progress history, the upgrade planner, Hero Lab setups, and cached copies of clan data are stored in your browser's local storage on your device. Clearing site data removes them. Downloaded backup files are created only when you request them.</p>
+  <h2>Abuse protection</h2>
+  <p>To limit repeated sign-in and verification attempts, the service keeps short-lived rate-limit records based on a one-way hash of your network address.</p>
+  <h2>External services</h2>
+  <p>The site uses Supabase for accounts, the database, and server functions; the official Clash of Clans API for game data; and jsDelivr to load a public game-data catalog and the Supabase library.</p>
   <h2>What is not collected</h2>
-  <p>This alpha does not request a Supercell ID password, payment data, precise location, contacts, camera access, or microphone access.</p>
-  <h2>Deleting local data</h2>
-  <p>You can clear the application data through the app controls or through your browser's site-storage settings. Download a backup first if you need to preserve the information.</p>
+  <p>50 Champs does not ask for your Supercell ID or its password, payment data, precise location, contacts, camera, or microphone.</p>
+  <h2>Deleting your data</h2>
+  <p>You can unlink a game account at any time from the clan menu. Browser data can be cleared through the app or your browser's site-storage settings. To delete your 50 Champs account and the data linked to it, contact the site administrator.</p>
   <h2>Fan-content notice</h2>
   <p>This material is unofficial and is not endorsed by Supercell. Supercell is not responsible for it.</p>
-  <p><small>Version 0.8 deployment preview · August 2026</small></p>
+  <p><small>Updated October 2026</small></p>
 </main></body></html>

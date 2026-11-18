@@ -1,0 +1,28 @@
+name: Sync game icons
+
+on:
+  workflow_dispatch:
+    inputs:
+      player_tags:
+        description: "Extra player tags for exact names (optional, comma separated)"
+        required: false
+  schedule:
+    - cron: "23 7 * * 1"   # every Monday 07:23 UTC
+
+concurrency: assets-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npm run assets:sync
+        env:
+          ASSETS_SYNC_SECRET: ${{ secrets.ASSETS_SYNC_SECRET }}
+          SAMPLE_PLAYER_TAGS: ${{ inputs.player_tags }}
+          

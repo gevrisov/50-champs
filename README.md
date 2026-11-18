@@ -1,52 +1,37 @@
-# 50 Champs — Web Alpha 0.10
+# 50 Champs
 
-50 Champs is an unofficial browser-based clan management and village progress toolkit.
+Unofficial clan dashboard for Clash of Clans: war room, live war map, CWL, clan roster, village progress and Hero Lab.
+Site: https://50champs.com (GitHub Pages). Backend: Supabase (database, Edge Functions, Storage).
 
-## Website structure
+## Pages
+- `index.html` — landing page
+- `dashboard.html` — the app (home feed, war, CWL, clan, village, Hero Lab)
+- `war-map.html` — live war map (opened from the War tab)
+- `privacy.html` — privacy and fan-content notice
+- `404.html` — page not found
+- `sw.js`, `manifest.webmanifest`, icons — install to home screen and war notifications
+- `coc-icon.js` — `<coc-icon>` game icons
+- `game-data.json` — verified game-data overrides used by the dashboard
 
-- `index.html` — public landing page
-- `dashboard.html` — working local web dashboard
-- `privacy.html` — privacy information
-- `404.html` — not-found page
+## Supabase
+- SQL: run `sql-1` … `sql-5` in order (all are safe to run again).
+- Edge Functions: `clan-sync` (accounts, roles, profiles), `war-stats` (collects wars every 2 min, push, Remind), `assets-sync` (game icons).
+- Secrets: `CLASH_API_TOKEN`, `CLASH_API_BASE_URL`, `STATS_CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`. Never commit them.
 
-## Current dashboard modules
+## Game icons (coc-assets)
+Icons live in Supabase Storage, bucket `coc-assets`; the list is in table `coc_assets` and in `coc-assets/manifest.json`.
+- League and label icons come from the official Clash API (Edge Function `assets-sync`).
+- Troops, siege machines, spells, heroes, pets, equipment, buildings and missing league icons come from [ClashKing Assets](https://github.com/ClashKingInc/ClashKingAssets), converted to webp 128 px and 64 px.
+- On pages: `<coc-icon type="hero" name="Barbarian King" size="32"></coc-icon>`. No icon → initials tile.
 
-- Village JSON import and snapshots
-- Home Village and Builder Base inventory
-- Active upgrade timers
-- Upgrade Planner
-- Progress history
-- Clan members
-- War Room and cleanup board
-- CWL Bonus Tracker
-- Local backup and recovery
+### After a game update
+1. Wait until ClashKing Assets has a new commit with the new units (usually a few days).
+2. GitHub → Actions → **Sync game icons** → **Run workflow**. It also runs by itself every Monday.
+3. Open the finished run: the summary lists **API names without an icon**.
+4. If the pack has the icon under another name, add a line to `scripts/asset-overrides.json`, for example `"New Gear Name": "equipment/new_gear.webp"`, and run the workflow again.
+5. Pages pick up the new `manifest.json` within 6 hours.
 
-## Interactive progress details
+Locally (optional): `npm install`, then `ASSETS_SYNC_SECRET=... npm run assets:sync` (Node 22.18+).
+GitHub secret `ASSETS_SYNC_SECRET` = the value of `STATS_CRON_SECRET` in Supabase.
 
-The Home Village and Builder Base progress categories are clickable cards with original SVG icons.
-
-Opening a category shows the individual levels detected in the village export:
-
-- Heroes — every hero, current level, active upgrade, and latest change
-- Hero pets — every pet and its current level
-- Hero equipment — every equipment item and its current level
-- Laboratory — troops, spells, and siege machines with category filters
-- Structures — defenses, resources, army buildings, Town Hall, and support filters
-- Traps and walls — level distributions and object counts
-- Builder Base — structures, traps, Star Laboratory troops, heroes, and walls
-
-The detail view shows current exported levels. Individual maximum levels are not yet attached to every object; exact maximum comparison remains calculated at the category level.
-
-## Important alpha limitation
-
-All operational data is stored in the visitor's browser. Different phones do not share data. Clearing browser storage removes local data unless a backup was downloaded.
-
-## Deployment
-
-Publish the files from the repository root with GitHub Pages. The public entry point is `index.html`; users open the tool through `dashboard.html`.
-
-## Next development stage
-
-Authentication, shared clan workspaces, roles, invitations, synchronization, and server backups.
-
-This is an unofficial fan project and is not affiliated with or endorsed by Supercell.
+This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: www.supercell.com/fan-content-policy

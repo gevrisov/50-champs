@@ -6,8 +6,57 @@
   <meta name="theme-color" content="#0b1020">
   <title>Privacy — 50 Champs</title>
   <style>
-    :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#080c18;color:#f4f7ff}
-    body{margin:0;padding:28px 18px}.wrap{max-width:760px;margin:auto}a{color:#91a8ff}h1,h2{line-height:1.2}p,li{color:#b8c2d8;line-height:1.65}.box{background:#11182a;border:1px solid #26314a;border-radius:16px;padding:20px;margin:20px 0}
+:root {
+  color-scheme: dark;
+  --ink-rgb: 230, 233, 238;
+  --base-rgb: 15, 17, 21;
+  --accent-rgb: 151, 170, 204;
+  --success-rgb: 104, 178, 140;
+  --warning-rgb: 222, 172, 82;
+  --danger-rgb: 226, 112, 112;
+  --bg: #0f1115;
+  --panel: #171a20;
+  --panel-soft: #1d2128;
+  --text: #e6e9ee;
+  --muted: #9aa1ac;
+  --border: #2a2f37;
+  --accent: rgb(var(--accent-rgb));
+  --on-accent: #0f1115;
+  --dim-bg: rgba(0, 0, 0, 0.28);
+  --accent-soft: rgba(var(--accent-rgb), 0.14);
+  --success: rgb(var(--success-rgb));
+  --warning: rgb(var(--warning-rgb));
+  --danger: rgb(var(--danger-rgb));
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --ink-rgb: 24, 29, 37;
+    --base-rgb: 255, 255, 255;
+    --accent-rgb: 47, 84, 160;
+    --success-rgb: 31, 128, 84;
+    --warning-rgb: 176, 110, 12;
+    --danger-rgb: 190, 52, 52;
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel-soft: #f7f8fa;
+    --text: #1d232b;
+    --muted: #5b6472;
+    --border: #dde1e6;
+    --on-accent: #ffffff;
+    --dim-bg: rgba(0, 0, 0, 0.04);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ink-rgb: 24, 29, 37; --base-rgb: 255, 255, 255; --accent-rgb: 47, 84, 160;
+  --success-rgb: 31, 128, 84; --warning-rgb: 176, 110, 12; --danger-rgb: 190, 52, 52;
+  --bg: #f4f5f7; --panel: #ffffff; --panel-soft: #f7f8fa; --text: #1d232b; --muted: #5b6472; --border: #dde1e6; --on-accent: #ffffff; --dim-bg: rgba(0, 0, 0, 0.04);
+}
+
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:rgba(var(--base-rgb), 1);color:rgba(var(--ink-rgb), 1)}
+    body{margin:0;padding:28px 18px}.wrap{max-width:760px;margin:auto}a{color:rgba(var(--accent-rgb), 1)}h1,h2{line-height:1.2}p,li{color:rgba(var(--ink-rgb), 0.55);line-height:1.65}.box{background:rgba(var(--accent-rgb), 0.12);border:1px solid rgba(var(--base-rgb), 1);border-radius:16px;padding:20px;margin:20px 0}
   </style>
 </head>
 <body><main class="wrap">
@@ -25,12 +74,13 @@
   <h2>Abuse protection</h2>
   <p>To limit repeated sign-in and verification attempts, the service keeps short-lived rate-limit records based on a one-way hash of your network address.</p>
   <h2>External services</h2>
-  <p>The site uses Supabase for accounts, the database, and server functions; the official Clash of Clans API for game data; and jsDelivr to load a public game-data catalog and the Supabase library.</p>
+  <p>The site uses Supabase for accounts, the database, and server functions; the official Clash of Clans API for game data; Supabase Storage for game icons; and jsDelivr to load a public game-data catalog and the Supabase library.</p>
   <h2>What is not collected</h2>
   <p>50 Champs does not ask for your Supercell ID or its password, payment data, precise location, contacts, camera, or microphone.</p>
   <h2>Deleting your data</h2>
   <p>You can unlink a game account at any time from the clan menu. Browser data can be cleared through the app or your browser's site-storage settings. To delete your 50 Champs account and the data linked to it, contact the site administrator.</p>
   <h2>Fan-content notice</h2>
-  <p>This material is unofficial and is not endorsed by Supercell. Supercell is not responsible for it.</p>
-  <p><small>Updated October 2026</small></p>
+  <p>This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: <a href="https://www.supercell.com/fan-content-policy" target="_blank" rel="noopener">www.supercell.com/fan-content-policy</a></p>
+  <p>Game icons come from the open <a href="https://github.com/ClashKingInc/ClashKingAssets" target="_blank" rel="noopener">ClashKing Assets</a> pack and the official Clash of Clans API, and are served from our own Supabase Storage.</p>
+  <p><small>Updated November 2026</small></p>
 </main></body></html>

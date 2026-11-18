@@ -4,13 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080c18">
-  <meta name="description" content="50 Champs is a browser-based clan management and village progress toolkit for Clash of Clans players.">
+  <meta name="description" content="50 Champs is a clan workspace for Clash of Clans: shared War Room and CWL plans, live rosters, and village progress — with access that follows your in-game role.">
   <title>50 Champs — Clan tools built for war</title>
   <style>
-    :root{color-scheme:dark;--bg:#070b16;--panel:#11182a;--soft:#161f35;--text:#f5f7ff;--muted:#98a4ba;--line:#27324a;--accent:#718cff;--accent2:#8ca0ff;--success:#58d99b;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(900px 520px at 70% -5%,rgba(113,140,255,.22),transparent 58%),var(--bg);color:var(--text);line-height:1.55} a{color:inherit}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-weight:800}.mark{width:38px;height:38px;border-radius:12px;background:var(--accent);display:grid;place-items:center}.nav{display:flex;gap:20px;align-items:center}.nav a{text-decoration:none;color:var(--muted);font-size:14px}.button{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;padding:11px 16px;text-decoration:none;font-weight:700}.primary{background:var(--accent);border-color:var(--accent);color:#fff}.secondary{background:rgba(17,24,42,.65)}
-    .hero{padding:82px 0 70px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);gap:56px;align-items:center}.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent2);font-weight:800;text-transform:uppercase}.hero h1{font-size:clamp(44px,7vw,78px);line-height:1.02;letter-spacing:-.045em;margin:15px 0 20px}.hero p{font-size:19px;color:var(--muted);max-width:680px;margin:0 0 28px}.actions{display:flex;flex-wrap:wrap;gap:12px}.note{font-size:13px;color:var(--muted);margin-top:15px}.preview{background:linear-gradient(160deg,var(--soft),var(--panel));border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.3)}.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.dot{width:9px;height:9px;border-radius:50%;background:var(--success);display:inline-block}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{background:#0d1425;border:1px solid var(--line);border-radius:15px;padding:15px}.metric span{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:24px;margin-top:4px}.bar{height:9px;background:#080d19;border-radius:99px;margin-top:12px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}.list{margin-top:14px;border-top:1px solid var(--line)}.row{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}.row span{color:var(--muted)}
-    section{padding:70px 0}.section-head{max-width:700px;margin-bottom:28px}.section-head h2{font-size:clamp(32px,5vw,48px);line-height:1.1;margin:10px 0}.section-head p{color:var(--muted);font-size:17px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:rgba(17,24,42,.76);border:1px solid var(--line);border-radius:19px;padding:22px}.card h3{margin:0 0 9px}.card p{margin:0;color:var(--muted)}.status{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px}.roadmap{display:grid;grid-template-columns:1fr 1fr;gap:18px}.roadmap .card strong{color:var(--accent2)}.cta{background:linear-gradient(140deg,rgba(113,140,255,.18),rgba(17,24,42,.9));border:1px solid var(--line);border-radius:25px;padding:34px;display:flex;align-items:center;justify-content:space-between;gap:30px}.cta h2{margin:0 0 8px}.cta p{margin:0;color:var(--muted)}footer{border-top:1px solid var(--line);padding:28px 0 44px;color:var(--muted);font-size:13px}.footer-row{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+:root {
+  color-scheme: dark;
+  --ink-rgb: 230, 233, 238;
+  --base-rgb: 15, 17, 21;
+  --accent-rgb: 151, 170, 204;
+  --success-rgb: 104, 178, 140;
+  --warning-rgb: 222, 172, 82;
+  --danger-rgb: 226, 112, 112;
+  --bg: #0f1115;
+  --panel: #171a20;
+  --panel-soft: #1d2128;
+  --text: #e6e9ee;
+  --muted: #9aa1ac;
+  --border: #2a2f37;
+  --accent: rgb(var(--accent-rgb));
+  --on-accent: #0f1115;
+  --dim-bg: rgba(0, 0, 0, 0.28);
+  --accent-soft: rgba(var(--accent-rgb), 0.14);
+  --success: rgb(var(--success-rgb));
+  --warning: rgb(var(--warning-rgb));
+  --danger: rgb(var(--danger-rgb));
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --ink-rgb: 24, 29, 37;
+    --base-rgb: 255, 255, 255;
+    --accent-rgb: 47, 84, 160;
+    --success-rgb: 31, 128, 84;
+    --warning-rgb: 176, 110, 12;
+    --danger-rgb: 190, 52, 52;
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel-soft: #f7f8fa;
+    --text: #1d232b;
+    --muted: #5b6472;
+    --border: #dde1e6;
+    --on-accent: #ffffff;
+    --dim-bg: rgba(0, 0, 0, 0.04);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ink-rgb: 24, 29, 37; --base-rgb: 255, 255, 255; --accent-rgb: 47, 84, 160;
+  --success-rgb: 31, 128, 84; --warning-rgb: 176, 110, 12; --danger-rgb: 190, 52, 52;
+  --bg: #f4f5f7; --panel: #ffffff; --panel-soft: #f7f8fa; --text: #1d232b; --muted: #5b6472; --border: #dde1e6; --on-accent: #ffffff; --dim-bg: rgba(0, 0, 0, 0.04);
+}
+
+    :root{color-scheme:dark;--bg:rgba(var(--base-rgb), 1);--panel:rgba(var(--accent-rgb), 0.12);--soft:rgba(var(--accent-rgb), 0.12);--text:rgba(var(--ink-rgb), 1);--muted:rgba(var(--ink-rgb), 0.55);--line:rgba(var(--base-rgb), 1);--accent:rgba(var(--accent-rgb), 1);--accent2:rgba(var(--accent-rgb), 1);--success:rgba(var(--success-rgb), 1);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(900px 520px at 70% -5%,rgba(var(--accent-rgb), 0.22),transparent 58%),var(--bg);color:var(--text);line-height:1.55} a{color:inherit}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-weight:800}.mark{width:38px;height:38px;border-radius:12px;background:var(--accent);display:grid;place-items:center}.nav{display:flex;gap:20px;align-items:center}.nav a{text-decoration:none;color:var(--muted);font-size:14px}.button{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;padding:11px 16px;text-decoration:none;font-weight:700}.primary{background:var(--accent);border-color:var(--accent);color: var(--on-accent)}.secondary{background:rgba(var(--accent-rgb), 0.078)}
+    .hero{padding:82px 0 70px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);gap:56px;align-items:center}.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent2);font-weight:800;text-transform:uppercase}.hero h1{font-size:clamp(44px,7vw,78px);line-height:1.02;letter-spacing:-.045em;margin:15px 0 20px}.hero p{font-size:19px;color:var(--muted);max-width:680px;margin:0 0 28px}.actions{display:flex;flex-wrap:wrap;gap:12px}.note{font-size:13px;color:var(--muted);margin-top:15px}.preview{background:linear-gradient(160deg,var(--soft),var(--panel));border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.3)}.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.dot{width:9px;height:9px;border-radius:50%;background:var(--success);display:inline-block}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{background:rgba(var(--base-rgb), 1);border:1px solid var(--line);border-radius:15px;padding:15px}.metric span{font-size:12px;color:var(--muted)}.metric strong{display:block;font-size:24px;margin-top:4px}.bar{height:9px;background:rgba(var(--base-rgb), 1);border-radius:99px;margin-top:12px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);border-radius:inherit}.list{margin-top:14px;border-top:1px solid var(--line)}.row{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px}.row span{color:var(--muted)}
+    section{padding:70px 0}.section-head{max-width:700px;margin-bottom:28px}.section-head h2{font-size:clamp(32px,5vw,48px);line-height:1.1;margin:10px 0}.section-head p{color:var(--muted);font-size:17px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:rgba(var(--accent-rgb), 0.0912);border:1px solid var(--line);border-radius:19px;padding:22px}.card h3{margin:0 0 9px}.card p{margin:0;color:var(--muted)}.status{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px}.roadmap{display:grid;grid-template-columns:1fr 1fr;gap:18px}.roadmap .card strong{color:var(--accent2)}.cta{background:linear-gradient(140deg,rgba(var(--accent-rgb), 0.18),rgba(var(--accent-rgb), 0.108));border:1px solid var(--line);border-radius:25px;padding:34px;display:flex;align-items:center;justify-content:space-between;gap:30px}.cta h2{margin:0 0 8px}.cta p{margin:0;color:var(--muted)}footer{border-top:1px solid var(--line);padding:28px 0 44px;color:var(--muted);font-size:13px}.footer-row{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}.fan-note{margin-top:10px;font-size:12px}.fan-note a,.footer-row a{color:inherit}
     @media(max-width:820px){.nav>a:not(.button){display:none}.hero{grid-template-columns:1fr;padding-top:52px}.preview{max-width:620px}.grid{grid-template-columns:1fr}.roadmap{grid-template-columns:1fr}.cta{align-items:flex-start;flex-direction:column}}
     @media(max-width:480px){.wrap{width:min(100% - 22px,1120px)}.hero h1{font-size:46px}.hero p{font-size:17px}.actions .button{width:100%}.metrics{grid-template-columns:1fr}.cta{padding:24px}.top{padding:14px 0}}
   </style>
@@ -28,37 +77,37 @@
       <div>
         <div class="eyebrow">Clan management · Village tracking</div>
         <h1>Plan upgrades. Coordinate wars. Lead clearly.</h1>
-        <p>50 Champs brings village progress, active timers, upgrade planning, War Room coordination, cleanup tracking, and CWL bonus rankings into one browser-based workspace.</p>
+        <p>50 Champs brings your clan roster, War Room, cleanup tracking, CWL bonus rankings, and village progress into one shared workspace. Link your game account and your clan opens with the same role you have in the game.</p>
         <div class="actions"><a class="button primary" href="./dashboard.html">Open web dashboard</a><a class="button secondary" href="#features">See what is included</a></div>
-        <div class="note">Web Alpha 0.10 · Data is currently stored only in your browser. Cloud accounts and clan synchronization are in development.</div>
+        <div class="note">Early access · Clan rosters, war plans, and CWL seasons are shared through 50 Champs accounts. Village imports and upgrade plans still stay in your browser.</div>
       </div>
       <div class="preview" aria-label="Dashboard preview">
-        <div class="preview-head"><strong>Clan overview</strong><span class="status"><i class="dot"></i> Local alpha</span></div>
+        <div class="preview-head"><strong>Clan overview</strong><span class="status"><i class="dot"></i> Live sync</span></div>
         <div class="metrics"><div class="metric"><span>Village progress</span><strong>84.7%</strong><div class="bar"><i style="width:84.7%"></i></div></div><div class="metric"><span>War attacks left</span><strong>11</strong><div class="bar"><i style="width:55%"></i></div></div></div>
         <div class="list"><div class="row"><strong>Upgrade Planner</strong><span>Builder schedule</span></div><div class="row"><strong>War Room</strong><span>Targets & cleanup</span></div><div class="row"><strong>CWL Bonuses</strong><span>Transparent ranking</span></div></div>
       </div>
     </section>
 
     <section id="features" class="wrap">
-      <div class="section-head"><div class="eyebrow">Current web tools</div><h2>Useful before, during, and after every war.</h2><p>The dashboard is functional today, but remains an alpha while shared clan accounts and server synchronization are being built.</p></div>
+      <div class="section-head"><div class="eyebrow">Current web tools</div><h2>Useful before, during, and after every war.</h2><p>Leaders plan once, and the whole leadership team sees the same plan on every device. Members see their own orders.</p></div>
       <div class="grid">
-        <article class="card"><h3>Village Tracker</h3><p>Import a village JSON snapshot, inspect Home Village and Builder Base levels, active timers, progress categories, and changes between snapshots.</p></article>
+        <article class="card"><h3>Village Tracker</h3><p>Hero, equipment, pet, and lab levels load straight from your verified game account. Paste your village data in one tap to add buildings, walls, and upgrade timers.</p></article>
         <article class="card"><h3>Upgrade Planner</h3><p>Build a queue, assign builder or laboratory lanes, estimate start and completion dates, and account for manual time and cost discounts.</p></article>
-        <article class="card"><h3>War Room</h3><p>Create wars, select the roster, assign both attacks, record stars and destruction, and keep an automatically ordered cleanup board.</p></article>
-        <article class="card"><h3>CWL Bonus Tracker</h3><p>Track seven daily scores, average destruction, ranking, bonus positions, and archive completed seasons as read-only records.</p></article>
+        <article class="card"><h3>War Room</h3><p>Live war data from the game, shared target assignments for both attacks, and an automatically ordered cleanup board — the same for every leader.</p></article>
+        <article class="card"><h3>CWL Bonus Tracker</h3><p>Track seven daily scores, average destruction, ranking, and bonus positions in one shared season, then archive it as a read-only record.</p></article>
         <article class="card"><h3>Clan Messages</h3><p>Generate assignments, cleanup lists, and reminders formatted into messages that respect the in-game character limit.</p></article>
-        <article class="card"><h3>Local Backups</h3><p>Export and restore villages, plans, wars, members, and CWL seasons while the cloud version is still under development.</p></article>
+        <article class="card"><h3>Roles from the game</h3><p>Your in-game leader owns the workspace, co-leaders manage it, and members follow along. Promotions, demotions, and departures update automatically.</p></article>
       </div>
     </section>
 
     <section id="roadmap" class="wrap">
-      <div class="section-head"><div class="eyebrow">Development status</div><h2>The website is online. Shared clan access comes next.</h2></div>
-      <div class="roadmap"><article class="card"><strong>Available now</strong><h3>Local web dashboard</h3><p>Every visitor has a private workspace stored in that browser. It is suitable for testing and individual clan leadership use.</p></article><article class="card"><strong>Next major release</strong><h3>Accounts and synchronization</h3><p>Leader, co-leader, and member roles; shared clans; invitations; phone-to-phone synchronization; server backups; and controlled access.</p></article></div>
+      <div class="section-head"><div class="eyebrow">Development status</div><h2>Shared clan access is live.</h2></div>
+      <div class="roadmap"><article class="card"><strong>Available now</strong><h3>Accounts and shared clans</h3><p>Username accounts with recovery codes, game accounts verified with the in-game API token, roles that follow the game, and rosters, war plans, and CWL seasons synced across devices.</p></article><article class="card"><strong>Still on your device</strong><h3>Village data and plans</h3><p>Imported village snapshots, the upgrade planner, and progress history are stored in your browser. Download a backup from the dashboard to keep a copy.</p></article></div>
     </section>
 
-    <section class="wrap"><div class="cta"><div><h2>Open the current web dashboard</h2><p>Start with a test snapshot. Do not rely on the alpha as the only copy of important clan data.</p></div><a class="button primary" href="./dashboard.html">Launch dashboard</a></div></section>
+    <section class="wrap"><div class="cta"><div><h2>Open the current web dashboard</h2><p>Sign in, link your game account, and your clan is ready. Keep a backup of village data you care about.</p></div><a class="button primary" href="./dashboard.html">Launch dashboard</a></div></section>
   </main>
 
-  <footer><div class="wrap footer-row"><span>50 Champs · Unofficial fan project</span><span>Not affiliated with or endorsed by Supercell · <a href="./privacy.html">Privacy</a></span></div></footer>
+  <footer><div class="wrap footer-row"><span>50 Champs · Unofficial fan project</span><span>Icons: <a href="https://github.com/ClashKingInc/ClashKingAssets" target="_blank" rel="noopener">ClashKing Assets</a> · <a href="./privacy.html">Privacy</a></span></div><div class="wrap fan-note">This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: <a href="https://www.supercell.com/fan-content-policy" target="_blank" rel="noopener">www.supercell.com/fan-content-policy</a></div></footer>
 </body>
 </html>

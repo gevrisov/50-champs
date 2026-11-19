@@ -10629,6 +10629,12 @@ body.hero-lab-inventory-open { overflow: hidden; }
 }
 .hl7-inventory-item.already-used small { color: rgba(var(--warning-rgb), 0.72); }
 </style>
+<style id="clan-page-banner-css">
+.clan-page-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;padding:14px 16px;border-radius:16px;
+  border:1px solid rgba(var(--accent-rgb),.45);background:rgba(var(--accent-rgb),.10);color:inherit;text-decoration:none}
+.clan-page-banner b{display:block;font-size:15px}.clan-page-banner small{display:block;color:rgba(var(--ink-rgb),.6);font-size:12.5px;margin-top:2px}
+.clan-page-banner-go{display:inline-flex;align-items:center;gap:4px;font-weight:800;font-size:13px;white-space:nowrap;color:rgb(var(--accent-rgb))}
+</style>
 <style id="coc-icon-site">
 .th-cell{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .fan-footer{margin:28px 0 8px;padding-top:16px;border-top:1px solid rgba(var(--ink-rgb),.1);color:rgba(var(--ink-rgb),.55);font-size:12px;line-height:1.5}
@@ -11429,6 +11435,10 @@ body.hero-lab-inventory-open { overflow: hidden; }
       </section>
 
       <section id="view-clan" class="view">
+        <a class="clan-page-banner" id="clan-page-link" href="clan.html">
+          <span><b>New clan page</b><small>Members with leagues and war stars, player profiles, war history</small></span>
+          <span class="clan-page-banner-go">Open<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg></span>
+        </a>
         <div class="two-column-grid clan-roster-layout">
           <section class="panel clan-roster-panel">
             <div class="panel-header clan-roster-header">
@@ -17576,6 +17586,8 @@ async function adminTransferOwnership(userId) {
 document.addEventListener("click", (event) => {
   const link = event.target.closest("#war-map-link");
   if (link && state.clan?.id) link.href = `war-map.html?clan=${encodeURIComponent(state.clan.id)}`;
+  const clanLink = event.target.closest("#clan-page-link");
+  if (clanLink && state.clan?.id) clanLink.href = `clan.html?clan=${encodeURIComponent(state.clan.id)}`;
 }, true);
 
 function switchView(viewName) {

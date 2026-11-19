@@ -160,9 +160,9 @@ function collect(names: any) {
 
 async function render(e: Entry) {
   const src = join(A, e.src);
-  const out = async (px: number) => sharp(src).resize(px, px, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .webp({ quality: 88, effort: 5 }).toBuffer();
-  const big = await out(128), small = await out(64);
+  // big: native resolution up to 256 px (sharp on big headers and retina screens); small: 64 px for lists
+  const big = await sharp(src).resize(256, 256, { fit: "inside", withoutEnlargement: true }).webp({ quality: 86, effort: 5 }).toBuffer();
+  const small = await sharp(src).resize(64, 64, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).webp({ quality: 88, effort: 5 }).toBuffer();
   const id = e.external_id.replace(/[^a-z0-9_-]/g, "");
   return {
     type: e.type, external_id: e.external_id, name: e.name,
@@ -213,4 +213,4 @@ async function main() {
 }
 
 main().catch((e) => { console.error(e.message || e); process.exit(1); });
-    
+                                         
